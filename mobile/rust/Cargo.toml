@@ -1,0 +1,26 @@
+[package]
+name = "quicksend_core_android"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+
+[workspace]
+
+[lib]
+name = "quicksend_core"
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = "1.0"
+futures-util = "0.3"
+localsend = { path = "../../packages/core", features = ["discovery"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+tokio-util = "0.7"
+uuid = { version = "1", features = ["v4"] }
+tracing = "0.1"
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.21"
+libc = "0.2"

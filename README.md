@@ -1,14 +1,34 @@
 # Quick Send
 
-Quick Send, internet bağlantısı olmadan aynı yerel ağdaki cihazlar arasında dosya ve mesaj aktarmak için geliştirilmiş açık kaynaklı bir uygulamadır. Android ve Linux'u hedefler; ağ keşfi, HTTPS aktarımı, otomatik TLS sertifikası ve alıcı onayı LocalSend protokol çekirdeğini kullanır.
+Quick Send, aynı yerel ağdaki cihazlar arasında dosya ve mesaj aktarır. Android uygulaması React Native arayüzü ve LocalSend protokol çekirdeğine bağlanan bir JNI köprüsü kullanır. Linux uygulaması, Quick Send kimliğine uyarlanmış Flutter arayüzünü kullanmaya devam eder. Yerel ağ keşfi, HTTPS aktarımı, otomatik TLS kimliği, sertifika parmak izi doğrulaması ve alıcı onayı LocalSend Rust çekirdeğinde kalır.
 
-Quick Send, LocalSend tabanlıdır. Yerel ağ protokol uygulaması Apache License 2.0 kapsamındadır; upstream telif bildirimleri korunur. Ayrıntılar için [NOTICE](NOTICE) ve [UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md) dosyalarına bakın.
+Quick Send, [LocalSend](https://github.com/localsend/localsend) tabanlıdır. Apache-2.0 lisansı ve upstream telif bildirimleri korunmuştur; ayrıntılar için [NOTICE](NOTICE) ve [LICENSE](LICENSE) dosyalarına bakın. Uygulamanın Hakkında ekranında da LocalSend atfı bulunur.
 
 Geliştirici: Muhammed Alparslan Sancaktar · Ensignsoft.
 
-> Android arayüzü React Native'e taşınma aşamasındadır. Bu Phase 1 anlık görüntüsünde Android derlemesi henüz upstream Flutter uygulamasını kullanır; React Native derleme adımları Phase 2 tamamlanınca bu README'ye eklenecektir.
+## Android
 
-## Linux'ta derleme
+Gereksinimler: Node.js 22.11 veya üzeri, JDK 21, Android SDK Platform 37, Android NDK 27.1.12297006 ve `mobile/rust/rust-toolchain.toml` dosyasında sabitlenen Rust araç zinciri. Minimum Android sürümü Android 10 (API 29).
+
+```sh
+cd mobile
+npm ci
+npm run typecheck
+npm test -- --runInBand
+npm run lint
+npm run android -- --mode debug
+```
+
+Bağlı bir cihaz olmadan APK üretmek için:
+
+```sh
+cd mobile/android
+./gradlew assembleDebug
+```
+
+APK `mobile/android/app/build/outputs/apk/debug/app-debug.apk` konumunda oluşur. Android application ID: `com.ensignsoft.quicksend`. Android 13 ve üzeri, arka plan alımını başlatmadan önce bildirim izni ister. Android 17 ve üzeri, cihaz keşfi için yerel ağ izni ister.
+
+## Linux
 
 Gereksinimler: FVM, Flutter 3.41.9, Rust 1.97.1 ve GTK 3 geliştirme paketleri.
 
@@ -21,40 +41,49 @@ fvm flutter test
 fvm flutter build linux --release
 ```
 
-Çıktı `app/build/linux/x64/release/bundle/` altında oluşur.
+Uygulama paketi `app/build/linux/x64/release/bundle/` altında oluşur. Linux uygulama kimliği: `com.ensignsoft.quicksend`.
 
-## Android geçiş dönemi derlemesi
+## Geliştirme araç zincirleri
 
-Android için JDK 21 ve Android SDK gerekir. Bu geçiş aşamasında:
+- Flutter: Linux için [.fvmrc](.fvmrc) içinde 3.41.9 sürümüne sabitlenmiştir.
+- Rust: Linux için [rust-toolchain.toml](rust-toolchain.toml) içinde 1.97.1 sürümüne sabitlenmiştir; Android JNI kasası da `mobile/rust/` altında bu sürüme sabitlenmiştir.
+- React Native: 0.88; bağımlılıklar `mobile/package-lock.json` ile sabitlenir.
 
-```sh
-cd app
-fvm flutter pub get
-fvm flutter build apk --release
-```
-
-Android application ID: `com.ensignsoft.quicksend`.
-
-## Geliştirme ortamı sürümleri
-
-- Flutter: [.fvmrc](.fvmrc) içindeki sürüm (3.41.9)
-- Rust: [rust-toolchain.toml](rust-toolchain.toml) içindeki sürüm (1.97.1)
-
-Ağ uç noktaları, telemetri veya üçüncü taraf servis eklenmemiştir. Protokol uyumluluğu ve sertifika doğrulaması hakkında güncel değişiklik sınırları [docs/UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md) içinde açıklanır.
+Quick Send analitik, telemetri veya üçüncü taraf servis eklemez. Upstream güncelleme sınırları ve protokol uyumluluğu [docs/UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md) içinde açıklanır.
 
 ---
 
 # Quick Send
 
-Quick Send is an open-source application for transferring files and messages between devices on the same local network without an internet connection. It targets Android and Linux. Network discovery, HTTPS transfer, automatically generated TLS certificates, and receiver approval use the LocalSend protocol core.
+Quick Send transfers files and messages between devices on the same local network. Android uses a React Native interface and a JNI bridge to the LocalSend protocol core. Linux continues to use the Flutter interface adapted to Quick Send. Local discovery, HTTPS transfer, the generated TLS identity, certificate fingerprint verification, and receiver approval remain in LocalSend's Rust core.
 
-Quick Send is based on LocalSend. Its local-network protocol implementation is distributed under the Apache License 2.0, and upstream copyright notices are retained. See [NOTICE](NOTICE) and [UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md) for details.
+Quick Send is based on [LocalSend](https://github.com/localsend/localsend). The Apache-2.0 license and upstream copyright notices are retained; see [NOTICE](NOTICE) and [LICENSE](LICENSE). The app's About screen also credits LocalSend.
 
 Developer: Muhammed Alparslan Sancaktar · Ensignsoft.
 
-> The Android interface is being migrated to React Native. In this Phase 1 snapshot, Android builds still use the upstream Flutter application; React Native build instructions will be added here after Phase 2.
+## Android
 
-## Build on Linux
+Requirements: Node.js 22.11 or newer, JDK 21, Android SDK Platform 37, Android NDK 27.1.12297006, and the Rust toolchain pinned in `mobile/rust/rust-toolchain.toml`. Minimum Android version: Android 10 (API 29).
+
+```sh
+cd mobile
+npm ci
+npm run typecheck
+npm test -- --runInBand
+npm run lint
+npm run android -- --mode debug
+```
+
+To build an APK without a connected device:
+
+```sh
+cd mobile/android
+./gradlew assembleDebug
+```
+
+The APK is created at `mobile/android/app/build/outputs/apk/debug/app-debug.apk`. Android application ID: `com.ensignsoft.quicksend`. Android 13 and later request notification permission before background receive mode starts. Android 17 and later request local-network access before discovery.
+
+## Linux
 
 Requirements: FVM, Flutter 3.41.9, Rust 1.97.1, and GTK 3 development packages.
 
@@ -67,23 +96,12 @@ fvm flutter test
 fvm flutter build linux --release
 ```
 
-The bundle is created under `app/build/linux/x64/release/bundle/`.
+The bundle is created under `app/build/linux/x64/release/bundle/`. Linux application identity: `com.ensignsoft.quicksend`.
 
-## Android transition build
+## Development toolchains
 
-Android builds require JDK 21 and the Android SDK. During the transition:
+- Flutter: version 3.41.9 pinned in [.fvmrc](.fvmrc) and used for Linux.
+- Rust: version 1.97.1 pinned in [rust-toolchain.toml](rust-toolchain.toml); Android's isolated crate is pinned separately under `mobile/rust/`.
+- React Native: 0.88, pinned in `mobile/package-lock.json`.
 
-```sh
-cd app
-fvm flutter pub get
-fvm flutter build apk --release
-```
-
-Android application ID: `com.ensignsoft.quicksend`.
-
-## Development toolchain
-
-- Flutter: version pinned in [.fvmrc](.fvmrc) (3.41.9)
-- Rust: version pinned in [rust-toolchain.toml](rust-toolchain.toml) (1.97.1)
-
-No network endpoints, analytics, telemetry, or third-party services have been added. See [docs/UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md) for protocol compatibility and the change boundaries used when syncing upstream.
+Quick Send adds no analytics, telemetry, or third-party service. Protocol and security boundaries for upstream updates are documented in [docs/UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md).

@@ -25,3 +25,23 @@ map of the fork-specific surface.
 
 No protocol model, route, port, TLS certificate, fingerprint verification, or
 receiver approval logic was changed in Phase 1.
+
+## Phase 2 Android interface
+
+- `mobile/` is the Android-only React Native 0.88 application. Material 3
+  components use system dynamic colors when available, with light/dark/system
+  appearance, English/Turkish strings, device discovery/list, transfer
+  approval, progress, and visibility controls.
+- `mobile/android/` contains the Android package identity, platform permission
+  requests, share intents, file selection and URI handling, notification
+  actions, Quick Settings tile, and the `connectedDevice` foreground receive
+  service for the local-network connection.
+- `mobile/rust/` is an isolated JNI crate that calls the existing
+  `packages/core`; protocol routes, payloads, TLS trust checks, and receive
+  approval stay in Rust core.
+- Android private TLS identity material is encrypted with an Android Keystore
+  key. Received files are finalized in Downloads/Quick Send after the core
+  reports successful checksum verification.
+
+Do not add LocalSend network behavior to JavaScript or Kotlin. Preserve the
+Android permission and receiver approval flow when changing this bridge.

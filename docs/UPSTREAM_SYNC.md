@@ -9,8 +9,9 @@ publishing remote configured.
 - Keep `packages/core`, `packages/localsend_isolates`, protocol models, HTTPS
   transport, certificate generation and fingerprint checks, and receiver
   approval behavior as close to upstream as possible.
-- Keep Quick Send identity, Android application UI, packaging and release
-  workflows in their own files/directories where practical.
+- Keep Quick Send identity and the React Native Android app in `mobile/`,
+  Flutter Linux presentation changes in `app/`, and packaging/release workflows
+  in their own files/directories where practical.
 - Preserve upstream `LICENSE`, per-file copyright headers, contributor credits,
   and protocol behavior. `NOTICE` records the fork attribution.
 - Do not merge upstream app branding, logos, platform claims, donation links, or
@@ -24,11 +25,13 @@ publishing remote configured.
 3. Resolve conflicts in application code by retaining protocol and security
    fixes, then reapplying the Quick Send UI and identity changes documented in
    [QUICK_SEND_CHANGES.md](QUICK_SEND_CHANGES.md).
-4. Regenerate derived files using the pinned Flutter/FVM and Rust toolchains;
-   do not hand-edit generated localization or binding output.
-5. Run the Flutter analysis/tests, Rust tests and clippy, and platform builds
-   affected by the sync. Verify TLS fingerprint validation and receiver
-   approval remain in the receive path.
+4. Regenerate derived files using the pinned Flutter/FVM, Node/React Native,
+   and Rust toolchains; do not hand-edit generated localization or binding
+   output.
+5. Run Flutter analysis/tests for Linux, React Native typecheck/lint/tests for
+   Android, Rust tests/clippy, and platform builds affected by the sync. Verify
+   TLS fingerprint validation and receiver approval remain in the receive
+   path, including the JNI bridge under `mobile/rust/`.
 6. Test interoperability with a LocalSend client on the same LAN before
    releasing a protocol-affecting sync. The Quick Send brand must remain separate
    from the upstream product identity while About retains the attribution.
@@ -40,3 +43,9 @@ LocalSend. Quick Send does not add a network service or endpoint. The upstream
 protocol uses TCP and UDP port 53317; changes to those routes, payloads, ports,
 certificate checks, or approval semantics require a separate compatibility
 review and documentation update.
+
+Android uses the existing Rust `packages/core` implementation through the
+isolated JNI wrapper in `mobile/rust/`; Kotlin in `mobile/android/` handles
+Android permissions, notifications, intents, storage URIs, and the foreground
+receive service. Do not reimplement protocol requests in JavaScript or Kotlin.
+Linux continues to use the upstream Flutter client and Rust package directly.
