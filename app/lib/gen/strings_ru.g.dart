@@ -40,7 +40,7 @@ class TranslationsRu extends Translations with BaseTranslations<AppLocale, Trans
 
   // Translations
   @override
-  String get appName => 'LocalSend';
+  String get appName => 'Quick Send';
   @override
   late final _Translations$general$ru general = _Translations$general$ru._(_root);
   @override
@@ -289,7 +289,7 @@ class _Translations$networkInterfacesPage$ru extends Translations$networkInterfa
   String get title => 'Сетевые интерфейсы';
   @override
   String get info =>
-      'По умолчанию, LocalSend использует все доступные сетевые интерфейсы. Вы можете исключить нежелательные сети здесь. Необходимо перезапустить сервер для применения изменений.';
+      'По умолчанию, Quick Send использует все доступные сетевые интерфейсы. Вы можете исключить нежелательные сети здесь. Необходимо перезапустить сервер для применения изменений.';
   @override
   String get preview => 'Предосмотр';
   @override
@@ -414,7 +414,7 @@ class _Translations$receiveOptionsPage$ru extends Translations$receiveOptionsPag
   @override
   String get destination => _root.settingsTab.receive.destination;
   @override
-  String get appDirectory => '(Папка LocalSend)';
+  String get appDirectory => '(Папка Quick Send)';
   @override
   String get saveToGallery => _root.settingsTab.receive.saveToGallery;
   @override
@@ -493,7 +493,7 @@ class _Translations$webSharePage$ru extends Translations$webSharePage$en {
   @override
   String pinHint({required Object pin}) => 'PIN-код: "${pin}"';
   @override
-  String get encryptionHint => 'LocalSend использует самоподписанный сертификат. Вам необходимо принять его в браузере.';
+  String get encryptionHint => 'Quick Send использует самоподписанный сертификат. Вам необходимо принять его в браузере.';
   @override
   String pendingRequests({required Object n}) => 'Ожидающие запросы: ${n}';
 }
@@ -517,11 +517,11 @@ class _Translations$aboutPage$ru extends Translations$aboutPage$en {
 
   // Translations
   @override
-  String get title => 'О LocalSend';
+  String get title => 'О Quick Send';
   @override
   List<String> get description => [
-    'LocalSend — это бесплатное приложение с открытым исходным кодом, которое позволяет вам безопасно обмениваться файлами и сообщениями с находящимися поблизости устройствами через локальную сеть, без необходимости подключения к Интернету.',
-    'Это приложение доступно для Android, iOS, macOS, Windows и Linux. Вы можете найти все варианты загрузки на официальной домашней странице.',
+    'Quick Send — это бесплатное приложение с открытым исходным кодом, которое позволяет вам безопасно обмениваться файлами и сообщениями с находящимися поблизости устройствами через локальную сеть, без необходимости подключения к Интернету.',
+    'Quick Send is currently available on Android and Linux.',
   ];
   @override
   String get author => 'Автор';
@@ -544,7 +544,7 @@ class _Translations$donationPage$ru extends Translations$donationPage$en {
   String get title => 'Пожертвовать';
   @override
   String get info =>
-      'LocalSend — это бесплатное приложение с открытым исходным кодом и без рекламы. Если оно вам нравится, вы можете поддержать его разработку пожертвованием.';
+      'Quick Send — это бесплатное приложение с открытым исходным кодом и без рекламы. Если оно вам нравится, вы можете поддержать его разработку пожертвованием.';
   @override
   String donate({required Object amount}) => 'Пожертвовать ${amount}';
   @override
@@ -660,7 +660,7 @@ class _Translations$tray$ru extends Translations$tray$en {
   @override
   String get open => _root.general.open;
   @override
-  String get close => 'Выйти из LocalSend';
+  String get close => 'Выйти из Quick Send';
   @override
   String get closeWindows => 'Выйти';
 }
@@ -871,7 +871,7 @@ class _Translations$settingsTab$general$ru extends Translations$settingsTab$gene
   @override
   String get launchMinimized => 'Скрытая автозагрузка';
   @override
-  String get showInContextMenu => 'Отображать LocalSend в контекстном меню';
+  String get showInContextMenu => 'Отображать Quick Send в контекстном меню';
   @override
   String get animations => 'Анимации';
 }
@@ -973,7 +973,7 @@ class _Translations$settingsTab$other$ru extends Translations$settingsTab$other$
   @override
   String get title => 'Другое';
   @override
-  String get support => 'Поддержать LocalSend';
+  String get support => 'Поддержать Quick Send';
   @override
   String get donate => 'Пожертвовать';
   @override
@@ -1330,7 +1330,7 @@ class _Translations$dialogs$localNetworkUnauthorized$ru extends Translations$dia
   String get title => _root.dialogs.noPermission.title;
   @override
   String get description =>
-      'LocalSend не может найти другие устройства без разрешения на сканирование локальной сети. Пожалуйста, предоставьте это разрешение в настройках.';
+      'Quick Send не может найти другие устройства без разрешения на сканирование локальной сети. Пожалуйста, предоставьте это разрешение в настройках.';
   @override
   String get gotoSettings => 'Настройки';
 }
@@ -1473,7 +1473,7 @@ class _Translations$dialogs$sendModeHelp$ru extends Translations$dialogs$sendMod
   @override
   String get multiple => 'Отправляет файлы нескольким получателям. Выборка не будет очищена после завершения передачи файлов.';
   @override
-  String get link => 'Получатели, у которых не установлен LocalSend, могут загрузить выбранные файлы, открыв ссылку в своем браузере.';
+  String get link => 'Получатели, у которых не установлен Quick Send, могут загрузить выбранные файлы, открыв ссылку в своем браузере.';
 }
 
 // Path: dialogs.zoom

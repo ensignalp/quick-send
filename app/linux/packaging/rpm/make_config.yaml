@@ -1,9 +1,7 @@
-display_name: LocalSend
-packager: Tienisto
-packagerEmail: dev.tien.donam@gmail.com
-url: https://localsend.org
+display_name: Quick Send
+packager: Muhammed Alparslan Sancaktar
 buildArch: x86_64
-license: MIT
+license: Apache-2.0
 
 icon: assets/img/logo-512.png
 
@@ -16,8 +14,8 @@ keywords:
   - LAN
   - Files
 
-generic_name: An open source cross-platform alternative to AirDrop
-summary: Share files easily with LocalSend
+generic_name: Local network file transfer
+summary: Share files securely over your local network
 group: Applications/Utilities
 
 categories:

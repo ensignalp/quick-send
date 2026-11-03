@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Quick Send
+Exec=quicksend
+Icon=quick-send
+Type=Application
+Terminal=false
+Categories=Utility;
+Comment=Transfer files over your local network
+StartupWMClass=com.ensignsoft.quicksend

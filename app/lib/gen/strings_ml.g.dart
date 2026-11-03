@@ -40,7 +40,7 @@ class TranslationsMl extends Translations with BaseTranslations<AppLocale, Trans
 
   // Translations
   @override
-  String get appName => 'ലോക്കൽസെൻഡ്‌';
+  String get appName => 'Quick Send';
   @override
   late final _Translations$general$ml general = _Translations$general$ml._(_root);
   @override
@@ -521,7 +521,7 @@ class _Translations$aboutPage$ml extends Translations$aboutPage$en {
   @override
   List<String> get description => [
     'ഇന്റർനെറ്റ് കണക്ഷന്റെ ആവശ്യമില്ലാതെ ലോക്കൽ നെറ്റ്വർക്കിലൂടെ അടുത്തുള്ള ഡിവൈസുകളിലേക്ക് സുരക്ഷിതമായി ഫയലുകളും മെസ്സേജുകളും അയക്കാൻ അനുവദിക്കുന്ന ഒരു സൗജന്യ ഓപ്പൺ സോഴ്സ് ആപ്പ് ആണ് ലോക്കൽസെൻഡ്‌.',
-    'ഈ ആപ്പ് ആൻഡ്രോയിഡ്, ഐഒഎസ്, മാക് ഒഎസ്, വിൻഡോസ് , ലിനക്സ് എന്നീ പ്ലാറ്റുഫോമുകളിൽ ലഭ്യമാണ് . എല്ലാവിധ ഡൌൺലോഡ് ഓപ്ഷൻസും ഔദ്യോഗിക ഹോം പേജിൽ കാണാവുന്നതാണ്.',
+    'Quick Send is currently available on Android and Linux.',
   ];
   @override
   String get author => 'ലേഖകൻ';

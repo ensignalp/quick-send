@@ -43,8 +43,8 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 
   // Translations
 
-  /// en: 'LocalSend'
-  String get appName => 'LocalSend';
+  /// en: 'Quick Send'
+  String get appName => 'Quick Send';
 
   late final Translations$general$en general = Translations$general$en.internal(_root);
   late final Translations$receiveTab$en receiveTab = Translations$receiveTab$en.internal(_root);
@@ -317,9 +317,9 @@ class Translations$networkInterfacesPage$en {
   /// en: 'Network Interfaces'
   String get title => 'Network Interfaces';
 
-  /// en: 'By default, LocalSend uses all available network interfaces. You can exclude unwanted networks here. You need to restart the server to apply the changes.'
+  /// en: 'By default, Quick Send uses all available network interfaces. You can exclude unwanted networks here. You need to restart the server to apply the changes.'
   String get info =>
-      'By default, LocalSend uses all available network interfaces. You can exclude unwanted networks here. You need to restart the server to apply the changes.';
+      'By default, Quick Send uses all available network interfaces. You can exclude unwanted networks here. You need to restart the server to apply the changes.';
 
   /// en: 'Preview'
   String get preview => 'Preview';
@@ -468,8 +468,8 @@ class Translations$receiveOptionsPage$en {
   /// en: 'Save to folder'
   String get destination => _root.settingsTab.receive.destination;
 
-  /// en: '(LocalSend folder)'
-  String get appDirectory => '(LocalSend folder)';
+  /// en: '(Quick Send folder)'
+  String get appDirectory => '(Quick Send folder)';
 
   /// en: 'Save media to gallery'
   String get saveToGallery => _root.settingsTab.receive.saveToGallery;
@@ -568,8 +568,8 @@ class Translations$webSharePage$en {
   /// en: 'The PIN is "{pin}"'
   String pinHint({required Object pin}) => 'The PIN is "${pin}"';
 
-  /// en: 'LocalSend uses a self-signed certificate. You need to accept it in your browser.'
-  String get encryptionHint => 'LocalSend uses a self-signed certificate. You need to accept it in your browser.';
+  /// en: 'Quick Send uses a self-signed certificate. You need to accept it in your browser.'
+  String get encryptionHint => 'Quick Send uses a self-signed certificate. You need to accept it in your browser.';
 
   /// en: 'Pending requests: {n}'
   String pendingRequests({required Object n}) => 'Pending requests: ${n}';
@@ -595,16 +595,16 @@ class Translations$aboutPage$en {
 
   // Translations
 
-  /// en: 'About LocalSend'
-  String get title => 'About LocalSend';
+  /// en: 'About Quick Send'
+  String get title => 'About Quick Send';
 
   List<String> get description => [
-    'LocalSend is a free, open-source app that allows you to securely share files and messages with nearby devices over your local network without needing an internet connection.',
-    'This app is available on Android, iOS, macOS, Windows and Linux. You can find all download options on the official homepage.',
+    'Quick Send is a free, open-source app for securely sharing files and messages with nearby devices over your local network, without an internet connection.',
+    'Quick Send is currently available on Android and Linux.',
   ];
 
-  /// en: 'Author'
-  String get author => 'Author';
+  /// en: 'LocalSend author'
+  String get author => 'LocalSend author';
 
   /// en: 'Contributors'
   String get contributors => 'Contributors';
@@ -614,6 +614,30 @@ class Translations$aboutPage$en {
 
   /// en: 'Translators'
   String get translators => 'Translators';
+
+  /// en: 'Developer'
+  String get developer => 'Developer';
+
+  /// en: 'Quick Send is based on LocalSend and uses its Apache-2.0-licensed protocol implementation.'
+  String get attribution => 'Quick Send is based on LocalSend and uses its Apache-2.0-licensed protocol implementation.';
+
+  /// en: 'LocalSend project homepage'
+  String get projectHomepage => 'LocalSend project homepage';
+
+  /// en: 'LocalSend upstream source (GitHub)'
+  String get upstreamGithub => 'LocalSend upstream source (GitHub)';
+
+  /// en: 'LocalSend upstream source (Codeberg)'
+  String get upstreamCodeberg => 'LocalSend upstream source (Codeberg)';
+
+  /// en: 'Apache License 2.0'
+  String get apacheLicense => 'Apache License 2.0';
+
+  /// en: 'License notices'
+  String get licenseNotices => 'License notices';
+
+  /// en: 'Debugging'
+  String get debugging => 'Debugging';
 }
 
 // Path: donationPage
@@ -627,8 +651,8 @@ class Translations$donationPage$en {
   /// en: 'Donate'
   String get title => 'Donate';
 
-  /// en: 'LocalSend is free, open-source and without any ads. If you like the app, you can support the development with a donation.'
-  String get info => 'LocalSend is free, open-source and without any ads. If you like the app, you can support the development with a donation.';
+  /// en: 'Quick Send is free, open-source and without any ads. If you like the app, you can support the development with a donation.'
+  String get info => 'Quick Send is free, open-source and without any ads. If you like the app, you can support the development with a donation.';
 
   /// en: 'Donate {amount}'
   String donate({required Object amount}) => 'Donate ${amount}';
@@ -813,8 +837,8 @@ class Translations$tray$en {
   /// en: 'Open'
   String get open => _root.general.open;
 
-  /// en: 'Quit LocalSend'
-  String get close => 'Quit LocalSend';
+  /// en: 'Quit Quick Send'
+  String get close => 'Quit Quick Send';
 
   /// en: 'Exit'
   String get closeWindows => 'Exit';
@@ -1097,8 +1121,8 @@ class Translations$settingsTab$general$en {
   /// en: 'Autostart: Start hidden'
   String get launchMinimized => 'Autostart: Start hidden';
 
-  /// en: 'Show LocalSend in context menu'
-  String get showInContextMenu => 'Show LocalSend in context menu';
+  /// en: 'Show Quick Send in context menu'
+  String get showInContextMenu => 'Show Quick Send in context menu';
 
   /// en: 'Animations'
   String get animations => 'Animations';
@@ -1230,8 +1254,8 @@ class Translations$settingsTab$other$en {
   /// en: 'Other'
   String get title => 'Other';
 
-  /// en: 'Support LocalSend'
-  String get support => 'Support LocalSend';
+  /// en: 'Support Quick Send'
+  String get support => 'Support Quick Send';
 
   /// en: 'Donate'
   String get donate => 'Donate';
@@ -1653,9 +1677,9 @@ class Translations$dialogs$localNetworkUnauthorized$en {
   /// en: 'No permission'
   String get title => _root.dialogs.noPermission.title;
 
-  /// en: 'LocalSend can't find other devices without having the permission to scan the local network. Please grant this permission in the settings.'
+  /// en: 'Quick Send can't find other devices without having the permission to scan the local network. Please grant this permission in the settings.'
   String get description =>
-      'LocalSend can\'t find other devices without having the permission to scan the local network. Please grant this permission in the settings.';
+      'Quick Send can\'t find other devices without having the permission to scan the local network. Please grant this permission in the settings.';
 
   /// en: 'Settings'
   String get gotoSettings => 'Settings';
@@ -1820,8 +1844,8 @@ class Translations$dialogs$sendModeHelp$en {
   /// en: 'Sends files to multiple recipients. Selection will not be cleared after finished files transfer.'
   String get multiple => 'Sends files to multiple recipients. Selection will not be cleared after finished files transfer.';
 
-  /// en: 'Recipients who do not have LocalSend installed can download the selected files by opening the link in their browser.'
-  String get link => 'Recipients who do not have LocalSend installed can download the selected files by opening the link in their browser.';
+  /// en: 'Recipients who do not have Quick Send installed can download the selected files by opening the link in their browser.'
+  String get link => 'Recipients who do not have Quick Send installed can download the selected files by opening the link in their browser.';
 }
 
 // Path: dialogs.zoom

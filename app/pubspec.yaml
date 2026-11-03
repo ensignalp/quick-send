@@ -1,6 +1,5 @@
 name: localsend_app
-description: An open source cross-platform alternative to AirDrop
-homepage: https://localsend.org/
+description: Quick Send transfers files and messages securely over your local network.
 publish_to: "none"
 resolution: workspace
 

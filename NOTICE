@@ -1,0 +1,12 @@
+Quick Send
+Copyright 2026 Muhammed Alparslan Sancaktar · Ensignsoft
+
+Quick Send is based on LocalSend:
+https://github.com/localsend/localsend
+
+The LocalSend-derived source and protocol implementation remain subject to the
+Apache License, Version 2.0. Original copyright notices and attributions in
+upstream files are retained. The upstream project and its contributors are not
+affiliated with or responsible for Quick Send.
+
+Quick Send-specific changes are documented in docs/QUICK_SEND_CHANGES.md.

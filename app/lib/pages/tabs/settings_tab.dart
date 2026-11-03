@@ -5,7 +5,6 @@ import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/model/persistence/color_mode.dart';
 import 'package:localsend_app/pages/about/about_page.dart';
 import 'package:localsend_app/pages/changelog_page.dart';
-import 'package:localsend_app/pages/donation/donation_page.dart';
 import 'package:localsend_app/pages/settings/network_interfaces_page.dart';
 import 'package:localsend_app/pages/tabs/settings_tab_controller.dart';
 import 'package:localsend_app/provider/network/server/server_provider.dart';
@@ -26,7 +25,7 @@ import 'package:localsend_app/widget/dialogs/quick_save_notice.dart';
 import 'package:localsend_app/widget/dialogs/text_field_tv.dart';
 import 'package:localsend_app/widget/dialogs/text_field_with_actions.dart';
 import 'package:localsend_app/widget/labeled_checkbox.dart';
-import 'package:localsend_app/widget/local_send_logo.dart';
+import 'package:localsend_app/widget/quick_send_logo.dart';
 import 'package:localsend_app/widget/responsive_list_view.dart';
 import 'package:localsend_isolates/constants.dart';
 import 'package:localsend_isolates/model/device.dart';
@@ -538,23 +537,6 @@ class SettingsTab extends StatelessWidget {
                     await context.push(() => const AboutPage());
                   },
                 ),
-                _ButtonEntry(
-                  label: t.settingsTab.other.support,
-                  buttonLabel: t.settingsTab.other.donate,
-                  onTap: () async {
-                    await context.push(() => const DonationPage());
-                  },
-                ),
-                _ButtonEntry(
-                  label: t.settingsTab.other.privacyPolicy,
-                  buttonLabel: t.general.open,
-                  onTap: () async {
-                    await launchUrl(
-                      Uri.parse('https://localsend.org/privacy'),
-                      mode: LaunchMode.externalApplication,
-                    );
-                  },
-                ),
                 if (checkPlatform([TargetPlatform.iOS, TargetPlatform.macOS]))
                   _ButtonEntry(
                     label: t.settingsTab.other.termsOfUse,
@@ -584,7 +566,7 @@ class SettingsTab extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            const LocalSendLogo(withText: true),
+            const QuickSendLogo(withText: true),
             const SizedBox(height: 5),
             ref
                 .watch(versionProvider)

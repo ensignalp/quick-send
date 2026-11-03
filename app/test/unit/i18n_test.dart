@@ -15,5 +15,20 @@ void main() {
         expect(kMaterialSupportedLanguages, contains(locale.languageCode));
       }
     });
+
+    test('Every locale uses the Quick Send product name', () {
+      for (final locale in AppLocale.values) {
+        expect(locale.translations.appName, 'Quick Send', reason: locale.name);
+      }
+    });
+
+    test('English and Turkish retain the LocalSend attribution', () async {
+      final en = await AppLocale.en.build();
+      final tr = await AppLocale.tr.build();
+      expect(en.aboutPage.attribution, contains('LocalSend'));
+      expect(tr.aboutPage.attribution, contains('LocalSend'));
+      expect(en.aboutPage.description.last, contains('Android and Linux'));
+      expect(tr.aboutPage.description.last, contains('Android ve Linux'));
+    });
   });
 }

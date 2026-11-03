@@ -3,16 +3,17 @@ version: 1
 script:
   # Workaround for error in Github Actions (https://github.com/AppImageCrafters/appimage-builder/issues/271)
   - which mksquashfs || apt install squashfs-tools
-  - install -Dm644 support/build/appimage/org.localsend.localsend_app.desktop AppDir/usr/share/applications/org.localsend.localsend_app.desktop
+  - install -Dm644 support/build/appimage/quick-send.png AppDir/usr/share/icons/hicolor/512x512/apps/quick-send.png
+  - install -Dm644 support/build/appimage/com.ensignsoft.quicksend.desktop AppDir/usr/share/applications/com.ensignsoft.quicksend.desktop
 
 AppDir:
   path: AppDir
   app_info:
-    id: org.localsend.localsend_app
-    name: LocalSend
-    icon: localsend
+    id: com.ensignsoft.quicksend
+    name: Quick Send
+    icon: quick-send
     version: 1.18.2
-    exec: localsend_app
+    exec: quicksend
     exec_args: $@
   apt:
     arch:
@@ -66,5 +67,4 @@ AppDir:
 #      command: ./AppRun
 AppImage:
   arch: x86_64
-  file_name: !ENV 'LocalSend-${APP_VERSION}-linux-x86-64.AppImage'
-  update-information: gh-releases-zsync|localsend|localsend|latest|LocalSend-*-linux-x86-64.AppImage.zsync
+  file_name: !ENV 'Quick-Send-${APP_VERSION}-linux-x86-64.AppImage'

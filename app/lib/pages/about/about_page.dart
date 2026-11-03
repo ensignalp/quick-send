@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/pages/debug/debug_page.dart';
 import 'package:localsend_app/util/i18n.dart';
-import 'package:localsend_app/widget/local_send_logo.dart';
+import 'package:localsend_app/widget/quick_send_logo.dart';
 import 'package:localsend_app/widget/responsive_list_view.dart';
 import 'package:routerino/routerino.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -31,7 +31,7 @@ class AboutPage extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 15),
         children: [
           const SizedBox(height: 20),
-          const LocalSendLogo(withText: true),
+          const QuickSendLogo(withText: true),
           Text(
             '© ${DateTime.now().year} Tien Do Nam',
             textAlign: TextAlign.center,
@@ -42,11 +42,16 @@ class AboutPage extends StatelessWidget {
               onPressed: () async {
                 await launchUrl(Uri.parse('https://localsend.org'));
               },
-              child: const Text('localsend.org'),
+              child: Text(t.aboutPage.projectHomepage),
             ),
           ),
           const SizedBox(height: 10),
           Text(t.aboutPage.description.join('\n\n')),
+          const SizedBox(height: 12),
+          Text(t.aboutPage.developer, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const Text('Muhammed Alparslan Sancaktar · Ensignsoft'),
+          const SizedBox(height: 12),
+          Text(t.aboutPage.attribution),
           const SizedBox(height: 20),
           Text(t.aboutPage.author, style: const TextStyle(fontWeight: FontWeight.bold)),
           Text.rich(
@@ -139,37 +144,37 @@ class AboutPage extends StatelessWidget {
                 onPressed: () async {
                   await launchUrl(Uri.parse('https://localsend.org'));
                 },
-                child: const Text('Homepage'),
+                child: Text(t.aboutPage.projectHomepage),
               ),
               TextButton(
                 onPressed: () async {
                   await launchUrl(Uri.parse('https://github.com/localsend/localsend'), mode: LaunchMode.externalApplication);
                 },
-                child: const Text('Source Code (Github)'),
+                child: Text(t.aboutPage.upstreamGithub),
               ),
               TextButton(
                 onPressed: () async {
                   await launchUrl(Uri.parse('https://codeberg.org/localsend/localsend'), mode: LaunchMode.externalApplication);
                 },
-                child: const Text('Source Code (Codeberg)'),
+                child: Text(t.aboutPage.upstreamCodeberg),
               ),
               TextButton(
                 onPressed: () async {
                   await launchUrl(Uri.parse('https://www.apache.org/licenses/LICENSE-2.0'));
                 },
-                child: const Text('Apache License 2.0'),
+                child: Text(t.aboutPage.apacheLicense),
               ),
               TextButton(
                 onPressed: () async {
                   await context.push(() => const LicensePage());
                 },
-                child: const Text('License Notices'),
+                child: Text(t.aboutPage.licenseNotices),
               ),
               TextButton(
                 onPressed: () async {
                   await context.push(() => const DebugPage());
                 },
-                child: const Text('Debugging'),
+                child: Text(t.aboutPage.debugging),
               ),
             ],
           ),

@@ -39,15 +39,15 @@ Future<void> main(List<String> args) async {
       container: container,
       child: SDTFScope(
         child: TranslationProvider(
-          child: const LocalSendApp(),
+          child: const QuickSendApp(),
         ),
       ),
     ),
   );
 }
 
-class LocalSendApp extends StatelessWidget {
-  const LocalSendApp();
+class QuickSendApp extends StatelessWidget {
+  const QuickSendApp();
 
   @override
   Widget build(BuildContext context) {

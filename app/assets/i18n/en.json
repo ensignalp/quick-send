@@ -1,5 +1,5 @@
 {
-  "appName": "LocalSend",
+  "appName": "Quick Send",
   "general": {
     "accept": "Accept",
     "accepted": "Accepted",
@@ -111,7 +111,7 @@
       "minimizeToTray": "Minimize to the System Tray/Menu Bar when closing",
       "launchAtStartup": "Autostart after login",
       "launchMinimized": "Autostart: Start hidden",
-      "showInContextMenu": "Show LocalSend in context menu",
+      "showInContextMenu": "Show Quick Send in context menu",
       "animations": "Animations"
     },
     "receive": {
@@ -154,7 +154,7 @@
     },
     "other": {
       "title": "Other",
-      "support": "Support LocalSend",
+      "support": "Support Quick Send",
       "donate": "Donate",
       "privacyPolicy": "Privacy Policy",
       "termsOfUse": "Terms of Use"
@@ -182,7 +182,7 @@
   },
   "networkInterfacesPage": {
     "title": "Network Interfaces",
-    "info": "By default, LocalSend uses all available network interfaces. You can exclude unwanted networks here. You need to restart the server to apply the changes.",
+    "info": "By default, Quick Send uses all available network interfaces. You can exclude unwanted networks here. You need to restart the server to apply the changes.",
     "preview": "Preview",
     "whitelist": "Whitelist",
     "blacklist": "Blacklist"
@@ -243,7 +243,7 @@
   "receiveOptionsPage": {
     "title": "Options",
     "destination": "@:settingsTab.receive.destination",
-    "appDirectory": "(LocalSend folder)",
+    "appDirectory": "(Quick Send folder)",
     "saveToGallery": "@:settingsTab.receive.saveToGallery",
     "saveToGalleryOff": "Turned off automatically because there are folders."
   },
@@ -295,26 +295,34 @@
     "autoAccept": "Automatically accept requests",
     "requirePin": "Require PIN",
     "pinHint": "The PIN is \"{pin}\"",
-    "encryptionHint": "LocalSend uses a self-signed certificate. You need to accept it in your browser.",
+    "encryptionHint": "Quick Send uses a self-signed certificate. You need to accept it in your browser.",
     "pendingRequests": "Pending requests: {n}"
   },
   "webReceivePage": {
     "title": "Receive via link"
   },
   "aboutPage": {
-    "title": "About LocalSend",
+    "title": "About Quick Send",
     "description": [
-      "LocalSend is a free, open-source app that allows you to securely share files and messages with nearby devices over your local network without needing an internet connection.",
-      "This app is available on Android, iOS, macOS, Windows and Linux. You can find all download options on the official homepage."
+      "Quick Send is a free, open-source app for securely sharing files and messages with nearby devices over your local network, without an internet connection.",
+      "Quick Send is currently available on Android and Linux."
     ],
-    "author": "Author",
+    "author": "LocalSend author",
     "contributors": "Contributors",
     "packagers": "Packagers",
-    "translators": "Translators"
+    "translators": "Translators",
+    "developer": "Developer",
+    "attribution": "Quick Send is based on LocalSend and uses its Apache-2.0-licensed protocol implementation.",
+    "projectHomepage": "LocalSend project homepage",
+    "upstreamGithub": "LocalSend upstream source (GitHub)",
+    "upstreamCodeberg": "LocalSend upstream source (Codeberg)",
+    "apacheLicense": "Apache License 2.0",
+    "licenseNotices": "License notices",
+    "debugging": "Debugging"
   },
   "donationPage": {
     "title": "Donate",
-    "info": "LocalSend is free, open-source and without any ads. If you like the app, you can support the development with a donation.",
+    "info": "Quick Send is free, open-source and without any ads. If you like the app, you can support the development with a donation.",
     "donate": "Donate {amount}",
     "thanks": "Thank you very much!",
     "restore": "Restore purchase"
@@ -473,7 +481,7 @@
     },
     "localNetworkUnauthorized": {
       "title": "@:dialogs.noPermission.title",
-      "description": "LocalSend can't find other devices without having the permission to scan the local network. Please grant this permission in the settings.",
+      "description": "Quick Send can't find other devices without having the permission to scan the local network. Please grant this permission in the settings.",
       "gotoSettings": "Settings"
     },
     "messageInput": {
@@ -520,7 +528,7 @@
       "title": "Send modes",
       "single": "Sends files to one recipient. Selection will be cleared after finished files transfer.",
       "multiple": "Sends files to multiple recipients. Selection will not be cleared after finished files transfer.",
-      "link": "Recipients who do not have LocalSend installed can download the selected files by opening the link in their browser."
+      "link": "Recipients who do not have Quick Send installed can download the selected files by opening the link in their browser."
     },
     "zoom": {
       "title": "URL"
@@ -533,7 +541,7 @@
   "tray": {
     "@info": "Apple Guidelines are very strict about the \"close\" wording.",
     "open": "@:general.open",
-    "close": "Quit LocalSend",
+    "close": "Quit Quick Send",
     "closeWindows": "Exit"
   },
   "web": {
