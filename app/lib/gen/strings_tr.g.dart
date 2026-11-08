@@ -547,6 +547,20 @@ class _Translations$aboutPage$tr extends Translations$aboutPage$en {
   String get licenseNotices => 'Lisans bildirimleri';
   @override
   String get debugging => 'Hata ayıklama';
+  @override
+  String get checkUpdates => 'Güncelleme var mı?';
+  @override
+  String get checkingUpdates => 'Güncellemeler denetleniyor…';
+  @override
+  String updateAvailable({required Object version}) => 'Quick Send ${version} sürümü mevcut.';
+  @override
+  String get upToDate => 'En güncel sürümü kullanıyorsunuz.';
+  @override
+  String get updateCheckFailed => 'Güncellemeler denetlenemedi.';
+  @override
+  String get updateCheckUnavailable => 'Bu derlemede güncelleme denetimi yapılandırılmamış.';
+  @override
+  String get openRelease => 'Sürüm sayfasını aç';
 }
 
 // Path: donationPage

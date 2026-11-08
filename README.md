@@ -46,7 +46,7 @@ Uygulama paketi `app/build/linux/x64/release/bundle/` altında oluşur. Linux uy
 ### Paketleme (RPM ve AppImage)
 
 ```sh
-cd app && fvm flutter build linux --release && cd ..
+cd app && fvm flutter build linux --release --dart-define=QS_RELEASES_REPO=<owner>/<repo> && cd ..
 packaging/rpm/build-rpm.sh          # build/rpm/RPMS/x86_64/quicksend-*.rpm
 sudo dnf install ./build/rpm/RPMS/x86_64/quicksend-*.rpm
 ```
@@ -122,7 +122,7 @@ The bundle is created under `app/build/linux/x64/release/bundle/`. Linux applica
 ### Packaging (RPM and AppImage)
 
 ```sh
-cd app && fvm flutter build linux --release && cd ..
+cd app && fvm flutter build linux --release --dart-define=QS_RELEASES_REPO=<owner>/<repo> && cd ..
 packaging/rpm/build-rpm.sh          # build/rpm/RPMS/x86_64/quicksend-*.rpm
 sudo dnf install ./build/rpm/RPMS/x86_64/quicksend-*.rpm
 ```

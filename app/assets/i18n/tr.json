@@ -316,7 +316,14 @@
     "upstreamCodeberg": "LocalSend kaynak kodu (Codeberg)",
     "apacheLicense": "Apache Lisansı 2.0",
     "licenseNotices": "Lisans bildirimleri",
-    "debugging": "Hata ayıklama"
+    "debugging": "Hata ayıklama",
+    "checkUpdates": "Güncelleme var mı?",
+    "checkingUpdates": "Güncellemeler denetleniyor…",
+    "updateAvailable": "Quick Send {version} sürümü mevcut.",
+    "upToDate": "En güncel sürümü kullanıyorsunuz.",
+    "updateCheckFailed": "Güncellemeler denetlenemedi.",
+    "updateCheckUnavailable": "Bu derlemede güncelleme denetimi yapılandırılmamış.",
+    "openRelease": "Sürüm sayfasını aç"
   },
   "donationPage": {
     "title": "Bağış yap",

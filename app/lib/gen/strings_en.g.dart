@@ -638,6 +638,27 @@ class Translations$aboutPage$en {
 
   /// en: 'Debugging'
   String get debugging => 'Debugging';
+
+  /// en: 'Check for updates'
+  String get checkUpdates => 'Check for updates';
+
+  /// en: 'Checking for updates…'
+  String get checkingUpdates => 'Checking for updates…';
+
+  /// en: 'Quick Send {version} is available.'
+  String updateAvailable({required Object version}) => 'Quick Send ${version} is available.';
+
+  /// en: 'You are using the latest version.'
+  String get upToDate => 'You are using the latest version.';
+
+  /// en: 'Could not check for updates.'
+  String get updateCheckFailed => 'Could not check for updates.';
+
+  /// en: 'Update checks are not configured for this build.'
+  String get updateCheckUnavailable => 'Update checks are not configured for this build.';
+
+  /// en: 'Open release page'
+  String get openRelease => 'Open release page';
 }
 
 // Path: donationPage

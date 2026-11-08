@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   NativeEventEmitter,
+  Linking,
   NativeModules,
   ScrollView,
   StatusBar,
@@ -28,6 +29,7 @@ import {
   TouchableRipple,
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { checkForUpdate, UpdateResult } from './src/updateCheck';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Language = 'en' | 'tr';
@@ -56,6 +58,8 @@ type Copy = {
   attribution: string; developer: string; requestTitle: string; from: string; files: string; accept: string; reject: string;
   sending: string; cancel: string; noFiles: string; transferStarted: string; transferComplete: string; transferFailed: string; bridgeMissing: string;
   permissionDenied: string;
+  checkUpdates: string; checkingUpdates: string; upToDate: string; updateFailed: string; updateNotConfigured: string; openRelease: string;
+  updateAvailable: (v: string) => string;
   size: (n: number) => string;
 };
 type DynamicColors = {
@@ -75,6 +79,7 @@ type QuickSendBridge = {
   getInitialSharedFiles: () => Promise<SharedFile[]>;
   getVisibility: () => Promise<'everyone' | 'off'>;
   isReceiverEnabled: () => Promise<boolean>;
+  getAppInfo: () => Promise<{ version: string; releasesRepo: string }>;
   addListener: (eventName: string) => void;
   removeListeners: (count: number) => void;
 };
@@ -100,6 +105,9 @@ const copy = {
     transferStarted: 'Transfer started', transferComplete: 'Transfer complete', transferFailed: 'The transfer could not be started.',
     bridgeMissing: 'Network transfer is unavailable in this build.', size: (n: number) => formatSize(n),
     permissionDenied: 'Allow local network access to find nearby devices.',
+    checkUpdates: 'Check for updates', checkingUpdates: 'Checking for updates…', upToDate: 'You are using the latest version.',
+    updateFailed: 'Could not check for updates.', updateNotConfigured: 'Update checks are not configured for this build.',
+    openRelease: 'Open release page', updateAvailable: (v: string) => `Quick Send ${v} is available.`,
   },
   tr: {
     nearby: 'Yakındaki cihazlar', receive: 'Alma', settings: 'Ayarlar', ready: 'Göndermeye hazır',
@@ -116,6 +124,9 @@ const copy = {
     transferStarted: 'Aktarım başladı', transferComplete: 'Aktarım tamamlandı', transferFailed: 'Aktarım başlatılamadı.',
     bridgeMissing: 'Bu derlemede ağ aktarımı kullanılamıyor.', size: (n: number) => formatSize(n),
     permissionDenied: 'Yakındaki cihazları bulmak için yerel ağ iznini ver.',
+    checkUpdates: 'Güncelleme var mı?', checkingUpdates: 'Güncellemeler denetleniyor…', upToDate: 'En güncel sürümü kullanıyorsun.',
+    updateFailed: 'Güncellemeler denetlenemedi.', updateNotConfigured: 'Bu derlemede güncelleme denetimi yapılandırılmamış.',
+    openRelease: 'Sürüm sayfasını aç', updateAvailable: (v: string) => `Quick Send ${v} sürümü mevcut.`,
   },
 } satisfies Record<Language, Copy>;
 
@@ -391,8 +402,31 @@ function SettingsScreen({ t, theme, language, setLanguage, appearance, setAppear
       <Text variant="titleMedium">{t.about}</Text>
       <Text variant="bodyMedium" style={[styles.aboutText, { color: theme.colors.onSurfaceVariant }]}>{t.developer}</Text>
       <Text variant="bodySmall" style={[styles.aboutSubText, { color: theme.colors.onSurfaceVariant }]}>{t.attribution}</Text>
+      <UpdateCheck t={t} theme={theme} />
     </Card.Content></Card>
   </ScrollView>;
+}
+
+function UpdateCheck({ t, theme }: any) {
+  const [checking, setChecking] = useState(false);
+  const [result, setResult] = useState<UpdateResult | null>(null);
+  const run = async () => {
+    setChecking(true);
+    const info = await bridge?.getAppInfo?.().catch(() => null);
+    setResult(info ? await checkForUpdate(info.version, info.releasesRepo) : { kind: 'notConfigured' });
+    setChecking(false);
+  };
+  const message = !result ? null
+    : result.kind === 'available' ? t.updateAvailable(result.version)
+    : result.kind === 'upToDate' ? t.upToDate
+    : result.kind === 'failed' ? t.updateFailed : t.updateNotConfigured;
+  return <View style={styles.aboutText}>
+    <Button mode="outlined" icon="update" onPress={run} loading={checking} disabled={checking} accessibilityLabel={t.checkUpdates}>
+      {checking ? t.checkingUpdates : t.checkUpdates}
+    </Button>
+    {message ? <Text variant="bodySmall" accessibilityLiveRegion="polite" style={[styles.aboutSubText, { color: theme.colors.onSurfaceVariant }]}>{message}</Text> : null}
+    {result?.kind === 'available' ? <Button mode="text" onPress={() => Linking.openURL(result.url)}>{t.openRelease}</Button> : null}
+  </View>;
 }
 
 function IncomingSheet({ transfer, t, theme, onAccept, onReject, onCancel }: any) {

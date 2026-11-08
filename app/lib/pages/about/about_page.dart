@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/pages/debug/debug_page.dart';
+import 'package:localsend_app/quick_send/update_check_button.dart';
 import 'package:localsend_app/util/i18n.dart';
 import 'package:localsend_app/widget/quick_send_logo.dart';
 import 'package:localsend_app/widget/responsive_list_view.dart';
@@ -140,6 +141,7 @@ class AboutPage extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const UpdateCheckButton(),
               TextButton(
                 onPressed: () async {
                   await launchUrl(Uri.parse('https://localsend.org'));

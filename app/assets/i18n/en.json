@@ -318,7 +318,14 @@
     "upstreamCodeberg": "LocalSend upstream source (Codeberg)",
     "apacheLicense": "Apache License 2.0",
     "licenseNotices": "License notices",
-    "debugging": "Debugging"
+    "debugging": "Debugging",
+    "checkUpdates": "Check for updates",
+    "checkingUpdates": "Checking for updates…",
+    "updateAvailable": "Quick Send {version} is available.",
+    "upToDate": "You are using the latest version.",
+    "updateCheckFailed": "Could not check for updates.",
+    "updateCheckUnavailable": "Update checks are not configured for this build.",
+    "openRelease": "Open release page"
   },
   "donationPage": {
     "title": "Donate",
