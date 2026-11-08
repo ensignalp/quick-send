@@ -82,12 +82,33 @@ android {
         applicationId "com.ensignsoft.quicksend"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode((System.getenv("QS_VERSION_CODE") ?: "1").toInteger())
+        versionName "0.1.0"
+        // owner/repo used only by the user-triggered update check; empty disables it.
+        def releasesRepo = (System.getenv("QS_RELEASES_REPO") ?: "").replaceAll(/[^A-Za-z0-9_.\/-]/, "")
+        buildConfigField "String", "RELEASES_REPO", "\"${releasesRepo}\""
+    }
+    buildFeatures {
+        buildConfig true
+    }
+    // Release signing comes only from environment variables (CI secrets).
+    // Never commit a keystore or passwords; see docs/RELEASE.md.
+    def releaseKeystore = System.getenv("QS_KEYSTORE_PATH")
+    signingConfigs {
+        if (releaseKeystore) {
+            release {
+                storeFile file(releaseKeystore)
+                storePassword System.getenv("QS_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("QS_KEY_ALIAS")
+                keyPassword System.getenv("QS_KEY_PASSWORD")
+            }
+        }
     }
     buildTypes {
         release {
-            // Release signing is configured from CI secrets in Phase 5.
+            if (releaseKeystore) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
@@ -97,6 +118,7 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    testImplementation("junit:junit:4.13.2")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

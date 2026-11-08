@@ -90,6 +90,13 @@ class QuickSendModule(private val context: ReactApplicationContext) : ReactConte
     })
   }
 
+  @ReactMethod fun getAppInfo(promise: Promise) {
+    promise.resolve(Arguments.createMap().apply {
+      putString("version", BuildConfig.VERSION_NAME)
+      putString("releasesRepo", BuildConfig.RELEASES_REPO)
+    })
+  }
+
   @ReactMethod fun getLanguage(promise: Promise) {
     promise.resolve(Locale.getDefault().language.lowercase(Locale.ROOT).let { if (it == "tr") "tr" else "en" })
   }
