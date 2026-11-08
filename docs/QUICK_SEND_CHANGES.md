@@ -45,3 +45,16 @@ receiver approval logic was changed in Phase 1.
 
 Do not add LocalSend network behavior to JavaScript or Kotlin. Preserve the
 Android permission and receiver approval flow when changing this bridge.
+
+## Phase 3 Linux desktop
+
+- Flutter keeps the Material 3 navigation rail and responsive content widths;
+  responsive breakpoints now use the actual available layout constraints.
+- Linux default window sizing follows the desktop layout, and the default
+  Material seed color matches Quick Send's Android fallback color.
+- Existing tray and close-to-tray behavior use Quick Send's icon identity.
+- `app/linux/packaging/` contains the system desktop entry, hicolor icon sizes,
+  tray icon, and AppStream metadata. AppImage recipes install the same metadata.
+- The existing `file_selector_linux` implementation creates a GTK
+  `GtkFileChooserNative`; GTK uses the FileChooser portal when it is available
+  on the user's session bus, which covers GNOME/Wayland portal installations.

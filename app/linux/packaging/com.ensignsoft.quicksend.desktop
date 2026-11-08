@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Quick Send
+GenericName=Local network file transfer
+Comment=Send files to devices on your local network
+Exec=quicksend %U
+Icon=com.ensignsoft.quicksend
+Terminal=false
+Type=Application
+Categories=Network;FileTransfer;
+StartupNotify=true
+StartupWMClass=com.ensignsoft.quicksend
+Keywords=files;transfer;sharing;LAN;

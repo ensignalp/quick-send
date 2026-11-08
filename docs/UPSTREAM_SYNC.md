@@ -49,3 +49,7 @@ isolated JNI wrapper in `mobile/rust/`; Kotlin in `mobile/android/` handles
 Android permissions, notifications, intents, storage URIs, and the foreground
 receive service. Do not reimplement protocol requests in JavaScript or Kotlin.
 Linux continues to use the upstream Flutter client and Rust package directly.
+Its GTK file selector uses `GtkFileChooserNative`, which delegates to the
+session's XDG FileChooser portal when that portal is available. Keep both the
+GTK fallback and GNOME/Wayland portal path functional when updating the Linux
+plugin.

@@ -73,8 +73,9 @@ class WindowDimensionsController {
 
   Future<void> _setDefaultDimensions() async {
     final primaryDisplay = await ScreenRetriever.instance.getPrimaryDisplay();
-    final hasEnoughWidthForDefaultSize = primaryDisplay.digestedSize.width >= 1200;
-    await WindowManager.instance.setSize(hasEnoughWidthForDefaultSize ? _defaultSize : _minimalSize);
+    final displaySize = primaryDisplay.digestedSize;
+    final hasEnoughSpaceForDefaultSize = displaySize.width >= 1000 && displaySize.height >= 650;
+    await WindowManager.instance.setSize(hasEnoughSpaceForDefaultSize ? _defaultSize : _minimalSize);
     await WindowManager.instance.center();
   }
 

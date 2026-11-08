@@ -5,6 +5,12 @@ script:
   - which mksquashfs || apt install squashfs-tools
   - install -Dm644 support/build/appimage/quick-send.png AppDir/usr/share/icons/hicolor/512x512/apps/quick-send.png
   - install -Dm644 support/build/appimage/com.ensignsoft.quicksend.desktop AppDir/usr/share/applications/com.ensignsoft.quicksend.desktop
+  - install -Dm644 app/linux/packaging/icons/hicolor/32x32/apps/com.ensignsoft.quicksend.png AppDir/usr/share/icons/hicolor/32x32/apps/com.ensignsoft.quicksend.png
+  - install -Dm644 app/linux/packaging/icons/hicolor/128x128/apps/com.ensignsoft.quicksend.png AppDir/usr/share/icons/hicolor/128x128/apps/com.ensignsoft.quicksend.png
+  - install -Dm644 app/linux/packaging/icons/hicolor/256x256/apps/com.ensignsoft.quicksend.png AppDir/usr/share/icons/hicolor/256x256/apps/com.ensignsoft.quicksend.png
+  - install -Dm644 app/linux/packaging/icons/hicolor/512x512/apps/com.ensignsoft.quicksend.png AppDir/usr/share/icons/hicolor/512x512/apps/com.ensignsoft.quicksend.png
+  - install -Dm644 app/linux/packaging/icons/hicolor/32x32/apps/com.ensignsoft.quicksend-tray.png AppDir/usr/share/icons/hicolor/32x32/apps/com.ensignsoft.quicksend-tray.png
+  - install -Dm644 app/linux/packaging/com.ensignsoft.quicksend.metainfo.xml AppDir/usr/share/metainfo/com.ensignsoft.quicksend.metainfo.xml
 
 AppDir:
   path: AppDir

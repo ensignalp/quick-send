@@ -53,58 +53,56 @@ class ResponsiveListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (itemBuilder != null) {
-      return Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maxWidth),
-          child: ResponsiveBuilder(
-            builder: (sizingInformation) {
-              final resolvedPadding = sizingInformation.isDesktop ? desktopPadding : padding;
-              return ListView.builder(
+      return ResponsiveBuilder(
+        builder: (sizingInformation) {
+          final resolvedPadding = sizingInformation.isDesktop ? desktopPadding : padding;
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: ListView.builder(
                 controller: controller,
                 padding: resolvedPadding.copyWith(
                   bottom: resolvedPadding.bottom + getNavBarPadding(context),
                 ),
                 itemCount: itemCount!,
                 itemBuilder: itemBuilder!,
-              );
-            },
-          ),
-        ),
+              ),
+            ),
+          );
+        },
       );
     } else if (children != null) {
-      return SingleChildScrollView(
-        controller: controller,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxWidth),
-            child: ResponsiveBuilder(
-              builder: (sizingInformation) {
-                final bottom = sizingInformation.isDesktop ? desktopPadding.bottom : padding.bottom;
-                return Padding(
-                  padding: (sizingInformation.isDesktop ? desktopPadding : padding).copyWith(
-                    bottom: bottom + getNavBarPadding(context),
+      return ResponsiveBuilder(
+        builder: (sizingInformation) {
+          final resolvedPadding = sizingInformation.isDesktop ? desktopPadding : padding;
+          return SingleChildScrollView(
+            controller: controller,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxWidth),
+                child: Padding(
+                  padding: resolvedPadding.copyWith(
+                    bottom: resolvedPadding.bottom + getNavBarPadding(context),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: children!,
                   ),
-                );
-              },
+                ),
+              ),
             ),
-          ),
-        ),
+          );
+        },
       );
     } else {
-      return Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maxWidth),
-          child: ResponsiveBuilder(
-            builder: (sizingInformation) {
-              return Padding(
-                padding: sizingInformation.isDesktop ? desktopPadding : padding,
-                child: child!,
-              );
-            },
+      return ResponsiveBuilder(
+        builder: (sizingInformation) => Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: Padding(
+              padding: sizingInformation.isDesktop ? desktopPadding : padding,
+              child: child!,
+            ),
           ),
         ),
       );

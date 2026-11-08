@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.ensignsoft.quicksend</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <name>Quick Send</name>
+  <summary>Transfer files over your local network</summary>
+  <summary xml:lang="tr">Yerel ağ üzerinden dosya aktarımı</summary>
+  <description>
+    <p>Quick Send lets you send files and text to nearby devices on the same local network. It discovers available devices automatically and transfers data directly between them.</p>
+    <p>Recipients review incoming transfers and can accept or decline them. Transfers use HTTPS with locally generated TLS certificates.</p>
+    <p>Quick Send is based on LocalSend. Its protocol core is licensed under the Apache License 2.0.</p>
+    <p xml:lang="tr">Quick Send, aynı yerel ağdaki yakındaki cihazlara dosya ve metin göndermenizi sağlar. Kullanılabilir cihazları otomatik olarak bulur ve verileri doğrudan cihazlar arasında aktarır.</p>
+    <p xml:lang="tr">Alıcılar gelen aktarımları inceleyip kabul edebilir veya reddedebilir. Aktarımlarda yerel olarak oluşturulan TLS sertifikalarıyla HTTPS kullanılır.</p>
+    <p xml:lang="tr">Quick Send, LocalSend tabanlıdır. Protokol çekirdeği Apache License 2.0 kapsamında lisanslanmıştır.</p>
+  </description>
+  <launchable type="desktop-id">com.ensignsoft.quicksend.desktop</launchable>
+  <developer id="com.ensignsoft">
+    <name>Ensignsoft</name>
+  </developer>
+  <provides>
+    <binary>quicksend</binary>
+  </provides>
+  <categories>
+    <category>Utility</category>
+    <category>Network</category>
+  </categories>
+  <keywords>
+    <keyword>files</keyword>
+    <keyword>transfer</keyword>
+    <keyword>local network</keyword>
+    <keyword xml:lang="tr">dosya</keyword>
+    <keyword xml:lang="tr">aktarım</keyword>
+    <keyword xml:lang="tr">yerel ağ</keyword>
+  </keywords>
+  <content_rating type="oars-1.1"/>
+</component>
