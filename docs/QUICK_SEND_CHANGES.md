@@ -68,3 +68,26 @@ Android permission and receiver approval flow when changing this bridge.
 - `packaging/firewalld/quicksend.xml`: TCP+UDP 53317 (from
   `packages/localsend_isolates/lib/constants.dart`). Not enabled automatically.
 - `app/pubspec.yaml`: Quick Send's own version line (0.1.0) replaces upstream's.
+
+## Phase 5 CI/CD and update check
+
+- `.github/workflows/`: upstream Windows/macOS/WinGet/deb/tar/CLI and
+  Flutter-Android workflows removed. `ci.yml` checks that Quick Send versions match and
+  adds React Native and JNI-crate jobs. `release.yml` builds a signed Android
+  APK/AAB, the AppImage and the RPM, then publishes a GitHub Release on `v*` tags.
+- `mobile/android/app/build.gradle`: release signing only from `QS_*`
+  environment variables; `RELEASES_REPO` BuildConfig field.
+- `app/lib/quick_send/` and `mobile/src/updateCheck.ts`: user-triggered
+  GitHub Releases check (one request per button press, no background calls).
+
+## Phase 6 tests and checklists
+
+- `docs/TEST_CHECKLIST.md`, `docs/SECURITY_CHECKLIST.md`; unit tests for
+  file-name sanitizing (Kotlin) and update-check logic (Dart, TypeScript).
+
+## Android build note
+
+The Flutter `app/android` project is inherited from upstream but **is not built
+or released**. The released Android app is `mobile/` (React Native + JNI to
+`packages/core`). Both share the same application ID, so never publish
+`app/android` output.

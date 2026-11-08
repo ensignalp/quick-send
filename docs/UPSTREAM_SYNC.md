@@ -36,6 +36,11 @@ publishing remote configured.
    releasing a protocol-affecting sync. The Quick Send brand must remain separate
    from the upstream product identity while About retains the attribution.
 
+## Android: which project ships
+
+`mobile/` is the only released Android app. `app/android` stays as close to
+upstream as possible to ease merges and is not built by CI.
+
 ## Current protocol boundary
 
 The REST/HTTPS and multicast discovery implementation is inherited from
