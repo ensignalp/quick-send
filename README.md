@@ -16,10 +16,12 @@ npm ci
 npm run typecheck
 npm test -- --runInBand
 npm run lint
-npm run android -- --mode debug
+npm run web        # tarayıcıda arayüz önizlemesi (simüle veri)
+npm run preview    # Expo Go ile telefonda önizleme (simüle veri)
+npm run android    # Expo dev client: gerçek aktarım + hot reload
 ```
 
-Bağlı bir cihaz olmadan APK üretmek için:
+Ayrıntılar: [mobile/README.md](mobile/README.md). Bağlı bir cihaz olmadan APK üretmek için:
 
 ```sh
 cd mobile/android
@@ -92,10 +94,12 @@ npm ci
 npm run typecheck
 npm test -- --runInBand
 npm run lint
-npm run android -- --mode debug
+npm run web        # browser UI preview (simulated data)
+npm run preview    # phone preview with Expo Go (simulated data)
+npm run android    # Expo dev client: real transfers + hot reload
 ```
 
-To build an APK without a connected device:
+Details: [mobile/README.md](mobile/README.md). To build an APK without a connected device:
 
 ```sh
 cd mobile/android

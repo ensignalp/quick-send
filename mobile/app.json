@@ -1,4 +1,21 @@
 {
-  "name": "QuickSendMobile",
-  "displayName": "Quick Send"
+  "expo": {
+    "name": "Quick Send",
+    "slug": "quick-send",
+    "version": "0.1.0",
+    "platforms": [
+      "android",
+      "web"
+    ],
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "package": "com.ensignsoft.quicksend"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
 }

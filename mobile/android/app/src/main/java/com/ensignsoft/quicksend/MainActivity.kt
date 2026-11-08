@@ -1,4 +1,5 @@
 package com.ensignsoft.quicksend
+import expo.modules.ReactActivityDelegateWrapper
 
 import android.content.Intent
 import com.facebook.react.ReactActivity
@@ -15,7 +16,7 @@ class MainActivity : ReactActivity() {
   override fun getMainComponentName(): String = "QuickSendMobile"
 
   override fun createReactActivityDelegate(): ReactActivityDelegate =
-    DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
+    ReactActivityDelegateWrapper(this, BuildConfig.IS_NEW_ARCHITECTURE_ENABLED, DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled))
 
   override fun onCreate(savedInstanceState: android.os.Bundle?) {
     QuickSendShare.capture(intent)

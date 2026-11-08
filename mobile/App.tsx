@@ -28,7 +28,8 @@ import {
   Text,
   TouchableRipple,
 } from 'react-native-paper';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { previewBridge, previewEvents } from './src/previewBridge';
 import { checkForUpdate, UpdateResult } from './src/updateCheck';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -84,9 +85,12 @@ type QuickSendBridge = {
   removeListeners: (count: number) => void;
 };
 
-const bridge = NativeModules.QuickSend as QuickSendBridge | undefined;
+const nativeBridge = NativeModules.QuickSend as QuickSendBridge | undefined;
+// Expo Go / web have no native module: in development use the simulated preview bridge.
+const isPreview = !nativeBridge && __DEV__;
+const bridge: QuickSendBridge | undefined = nativeBridge ?? (isPreview ? (previewBridge as unknown as QuickSendBridge) : undefined);
 const renderPaperIcon = ({ name, color, size }: any) => (
-  <MaterialCommunityIcons name={String(name)} color={color} size={size} />
+  <MaterialCommunityIcons name={String(name) as any} color={color} size={size} />
 );
 
 const copy = {
@@ -172,7 +176,7 @@ function AppContent() {
     bridge?.getVisibility().then(setVisibility).catch(() => undefined);
     bridge?.isReceiverEnabled().then(setReceiverOn).catch(() => undefined);
     if (!bridge) return;
-    const emitter = new NativeEventEmitter(NativeModules.QuickSend);
+    const emitter = nativeBridge ? new NativeEventEmitter(NativeModules.QuickSend) : previewEvents;
     const subscription = emitter.addListener('QuickSendEvent', (event: any) => {
       if (event.type === 'devices') setDevices(event.devices ?? []);
       if (event.type === 'device') setDevices(current => mergeDevice(current, event.device));
@@ -276,7 +280,7 @@ function AppContent() {
       <StatusBar barStyle={darkMode ? 'light-content' : 'dark-content'} />
       <Surface style={[styles.root, { backgroundColor: theme.colors.background }]}>
         <Appbar.Header elevated={false} style={[styles.appbar, { backgroundColor: theme.colors.background }]}>
-          <Appbar.Content title="Quick Send" titleStyle={styles.brandTitle} />
+          <Appbar.Content title={isPreview ? 'Quick Send · Preview' : 'Quick Send'} titleStyle={styles.brandTitle} />
           <IconButton icon="cog-outline" accessibilityLabel={t.settings} onPress={() => setScreen('settings')} />
         </Appbar.Header>
         <View style={styles.body}>
@@ -291,7 +295,7 @@ function AppContent() {
             const selected = screen === item;
             return <TouchableRipple key={item} accessibilityRole="tab" accessibilityState={{ selected }} accessibilityLabel={labels[index]} onPress={() => setScreen(item)} style={styles.navItem} borderless>
               <View style={styles.navContent}>
-                <MaterialCommunityIcons name={icons[index]} size={22} color={selected ? theme.colors.onSecondaryContainer : theme.colors.onSurfaceVariant} />
+                <MaterialCommunityIcons name={icons[index] as any} size={22} color={selected ? theme.colors.onSecondaryContainer : theme.colors.onSurfaceVariant} />
                 <Text variant="labelSmall" style={{ color: selected ? theme.colors.onSurface : theme.colors.onSurfaceVariant }}>{labels[index]}</Text>
               </View>
             </TouchableRipple>;

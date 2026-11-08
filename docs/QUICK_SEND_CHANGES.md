@@ -91,3 +91,11 @@ The Flutter `app/android` project is inherited from upstream but **is not built
 or released**. The released Android app is `mobile/` (React Native + JNI to
 `packages/core`). Both share the same application ID, so never publish
 `app/android` output.
+
+## Expo tooling (mobile)
+
+- `mobile/` uses Expo SDK 58 (matches RN 0.88) in the bare workflow via
+  `install-expo-modules`: Expo CLI, dev client, web and Expo Go preview.
+- `react-native-vector-icons` replaced by `@expo/vector-icons` (same icon set).
+- `src/previewBridge.ts` simulates the native bridge in development when the
+  native module is absent (Expo Go/web). It is never used in release builds and does no networking.

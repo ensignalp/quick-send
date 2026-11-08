@@ -1,6 +1,6 @@
 # Quick Send for Android
 
-The Android application is built with React Native 0.88 and React Native Paper's Material 3 components. Its Kotlin bridge calls the isolated Rust crate in `rust/`, which wraps the existing LocalSend protocol core without modifying its routes, payloads, or TLS fingerprint checks.
+The Android application is built with React Native 0.88 + Expo SDK 58 (bare workflow, the `android/` folder is committed and edited by hand — do **not** run `expo prebuild --clean`) and React Native Paper's Material 3 components. Its Kotlin bridge calls the isolated Rust crate in `rust/`, which wraps the existing LocalSend protocol core without modifying its routes, payloads, or TLS fingerprint checks.
 
 ## Requirements
 
@@ -18,21 +18,23 @@ npm ci
 npm run typecheck
 npm test -- --runInBand
 npm run lint
-npm start
 ```
 
-In another terminal, build and install the debug app:
+## Preview and development (Expo)
 
-```sh
-npm run android -- --mode debug
-```
+| Goal | Command | Real transfers? |
+|---|---|---|
+| UI preview in the browser | `npm run web` | No — simulated preview bridge |
+| UI preview on a phone with **Expo Go** (scan QR) | `npm run preview` | No — simulated preview bridge |
+| Full app on a device/emulator with hot reload (Expo dev client) | `npm run android` once, then `npm start` | Yes — native Kotlin + Rust core |
+| Plain debug APK | `cd android && ./gradlew assembleDebug` | Yes |
 
-Or build an APK directly:
-
-```sh
-cd android
-./gradlew assembleDebug
-```
+Expo Go and the browser cannot load Quick Send's native module (Kotlin + Rust
+`packages/core`). In development builds without it, `src/previewBridge.ts`
+simulates nearby devices, an incoming request and transfer progress, and the
+title shows "Quick Send · Preview". It makes no network calls and is disabled in
+release builds (`__DEV__` is false). Protocol behaviour must always be tested
+with the dev client or an APK.
 
 The APK is written to `android/app/build/outputs/apk/debug/app-debug.apk`.
 
