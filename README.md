@@ -43,13 +43,34 @@ fvm flutter build linux --release
 
 Uygulama paketi `app/build/linux/x64/release/bundle/` altında oluşur. Linux uygulama kimliği: `com.ensignsoft.quicksend`.
 
+### Paketleme (RPM ve AppImage)
+
+```sh
+cd app && fvm flutter build linux --release && cd ..
+packaging/rpm/build-rpm.sh          # build/rpm/RPMS/x86_64/quicksend-*.rpm
+sudo dnf install ./build/rpm/RPMS/x86_64/quicksend-*.rpm
+```
+
+AppImage tarifleri `support/build/appimage/` altındadır ve CI'da Ubuntu 22.04 (glibc 2.35) üzerinde derlenir.
+
+### Fedora güvenlik duvarı (firewalld)
+
+RPM, `quicksend` adlı bir firewalld servisi kurar (TCP ve UDP 53317; port LocalSend protokolünden doğrulanmıştır). Servis otomatik açılmaz; cihazların birbirini görmesi için bir kez etkinleştirin:
+
+```sh
+sudo firewall-cmd --permanent --add-service=quicksend
+sudo firewall-cmd --reload
+```
+
+Kaldırmak için `--remove-service=quicksend` kullanın. AppImage kullanıyorsanız aynı portları elle açın: `sudo firewall-cmd --permanent --add-port=53317/tcp --add-port=53317/udp`.
+
 ## Geliştirme araç zincirleri
 
 - Flutter: Linux için [.fvmrc](.fvmrc) içinde 3.41.9 sürümüne sabitlenmiştir.
 - Rust: Linux için [rust-toolchain.toml](rust-toolchain.toml) içinde 1.97.1 sürümüne sabitlenmiştir; Android JNI kasası da `mobile/rust/` altında bu sürüme sabitlenmiştir.
 - React Native: 0.88; bağımlılıklar `mobile/package-lock.json` ile sabitlenir.
 
-Quick Send analitik, telemetri veya üçüncü taraf servis eklemez. Upstream güncelleme sınırları ve protokol uyumluluğu [docs/UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md) içinde açıklanır.
+Quick Send analitik, telemetri veya üçüncü taraf servis eklemez. Upstream güncelleme sınırları ve protokol uyumluluğu [docs/UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md) içinde açıklanır. Sürüm ve imzalama: [docs/RELEASE.md](docs/RELEASE.md). Testler: [docs/TEST_CHECKLIST.md](docs/TEST_CHECKLIST.md), güvenlik: [docs/SECURITY_CHECKLIST.md](docs/SECURITY_CHECKLIST.md).
 
 ---
 
@@ -98,10 +119,31 @@ fvm flutter build linux --release
 
 The bundle is created under `app/build/linux/x64/release/bundle/`. Linux application identity: `com.ensignsoft.quicksend`.
 
+### Packaging (RPM and AppImage)
+
+```sh
+cd app && fvm flutter build linux --release && cd ..
+packaging/rpm/build-rpm.sh          # build/rpm/RPMS/x86_64/quicksend-*.rpm
+sudo dnf install ./build/rpm/RPMS/x86_64/quicksend-*.rpm
+```
+
+AppImage recipes live in `support/build/appimage/` and are built in CI on Ubuntu 22.04 (glibc 2.35).
+
+### Fedora firewall (firewalld)
+
+The RPM installs a `quicksend` firewalld service (TCP and UDP 53317, verified against the LocalSend protocol). It is not enabled automatically; enable it once so devices can discover each other:
+
+```sh
+sudo firewall-cmd --permanent --add-service=quicksend
+sudo firewall-cmd --reload
+```
+
+Use `--remove-service=quicksend` to undo. For the AppImage, open the ports manually: `sudo firewall-cmd --permanent --add-port=53317/tcp --add-port=53317/udp`.
+
 ## Development toolchains
 
 - Flutter: version 3.41.9 pinned in [.fvmrc](.fvmrc) and used for Linux.
 - Rust: version 1.97.1 pinned in [rust-toolchain.toml](rust-toolchain.toml); Android's isolated crate is pinned separately under `mobile/rust/`.
 - React Native: 0.88, pinned in `mobile/package-lock.json`.
 
-Quick Send adds no analytics, telemetry, or third-party service. Protocol and security boundaries for upstream updates are documented in [docs/UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md).
+Quick Send adds no analytics, telemetry, or third-party service. Protocol and security boundaries for upstream updates are documented in [docs/UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md). Releases and signing: [docs/RELEASE.md](docs/RELEASE.md). Testing: [docs/TEST_CHECKLIST.md](docs/TEST_CHECKLIST.md), security: [docs/SECURITY_CHECKLIST.md](docs/SECURITY_CHECKLIST.md).

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Quick Send firewalld service. Port and multicast group verified from
+     packages/localsend_isolates/lib/constants.dart (defaultPort = 53317,
+     defaultMulticastGroup = 224.0.0.167), inherited from LocalSend. -->
+<service>
+  <short>Quick Send</short>
+  <description>Quick Send local network file transfer (LocalSend protocol): HTTPS transfers on TCP 53317 and multicast discovery on UDP 53317.</description>
+  <port protocol="tcp" port="53317"/>
+  <port protocol="udp" port="53317"/>
+</service>

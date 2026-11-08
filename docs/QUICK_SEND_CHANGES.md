@@ -58,3 +58,13 @@ Android permission and receiver approval flow when changing this bridge.
 - The existing `file_selector_linux` implementation creates a GTK
   `GtkFileChooserNative`; GTK uses the FileChooser portal when it is available
   on the user's session bus, which covers GNOME/Wayland portal installations.
+
+## Phase 4 packaging
+
+- `packaging/rpm/quicksend.spec` + `build-rpm.sh`: binary RPM from the Flutter
+  release bundle, installed under `/opt/quicksend`; build-tree RUNPATHs are
+  rewritten to `$ORIGIN`. Requires GTK 3, xdg-desktop-portal and a GTK/GNOME/KDE
+  portal backend.
+- `packaging/firewalld/quicksend.xml`: TCP+UDP 53317 (from
+  `packages/localsend_isolates/lib/constants.dart`). Not enabled automatically.
+- `app/pubspec.yaml`: Quick Send's own version line (0.1.0) replaces upstream's.
