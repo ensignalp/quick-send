@@ -87,6 +87,8 @@ jobs:
         run: |
           git config --global --add safe.directory '*'
           flutter pub get
+          # Newer libayatana marks tray_manager's API deprecated; don't fail on it.
+          export CXXFLAGS=-Wno-error=deprecated-declarations
           flutter build linux --release --dart-define=QS_RELEASES_REPO=${{ github.repository }}
       - name: Build RPM
         run: packaging/rpm/build-rpm.sh
