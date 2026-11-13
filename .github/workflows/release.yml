@@ -18,7 +18,7 @@ jobs:
   android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -73,7 +73,7 @@ jobs:
     steps:
       - name: Install dependencies
         run: dnf install -y git clang cmake gtk3-devel ninja-build libayatana-appindicator-gtk3-devel jq findutils which xz unzip patchelf rpm-build desktop-file-utils rustup
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
