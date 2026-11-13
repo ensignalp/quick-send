@@ -59,7 +59,7 @@ jobs:
           cp mobile/android/app/build/outputs/apk/release/app-release.apk out/Quick-Send-${GITHUB_REF_NAME}-android.apk
           cp mobile/android/app/build/outputs/bundle/release/app-release.aab out/Quick-Send-${GITHUB_REF_NAME}-android.aab
           rm -f "$QS_KEYSTORE_PATH"
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: android
           path: out/*
@@ -93,7 +93,7 @@ jobs:
           sh ../support/build/linux/bundle-internet-helper.sh
       - name: Build RPM
         run: packaging/rpm/build-rpm.sh
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: rpm
           path: build/rpm/RPMS/x86_64/*.rpm

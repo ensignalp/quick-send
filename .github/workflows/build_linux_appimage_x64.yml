@@ -82,7 +82,7 @@ jobs:
         run: test -f "Quick-Send-${{ needs.build.outputs.version }}-linux-x86-64.AppImage"
 
       - name: Upload AppImage files
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: appimage-x86-64-result
           path: |
