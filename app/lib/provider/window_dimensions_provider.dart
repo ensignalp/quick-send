@@ -21,7 +21,7 @@ final windowDimensionProvider = Provider<WindowDimensionsController>((ref) {
 });
 
 const Size _minimalSize = Size(400, 500);
-const Size _defaultSize = Size(900, 600);
+const Size _defaultSize = Size(900, 500);
 
 class WindowDimensionsController {
   final PersistenceService _service;
@@ -74,7 +74,7 @@ class WindowDimensionsController {
   Future<void> _setDefaultDimensions() async {
     final primaryDisplay = await ScreenRetriever.instance.getPrimaryDisplay();
     final displaySize = primaryDisplay.digestedSize;
-    final hasEnoughSpaceForDefaultSize = displaySize.width >= 1000 && displaySize.height >= 650;
+    final hasEnoughSpaceForDefaultSize = displaySize.width >= 960 && displaySize.height >= 560;
     await WindowManager.instance.setSize(hasEnoughSpaceForDefaultSize ? _defaultSize : _minimalSize);
     await WindowManager.instance.center();
   }

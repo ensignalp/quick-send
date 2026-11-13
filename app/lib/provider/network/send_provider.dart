@@ -14,6 +14,7 @@ import 'package:localsend_app/provider/file_transfer_provider.dart';
 import 'package:localsend_app/provider/http_provider.dart';
 import 'package:localsend_app/provider/selection/selected_sending_files_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
+import 'package:localsend_app/quick_send/transfer_events.dart';
 import 'package:localsend_app/widget/dialogs/pin_dialog.dart';
 import 'package:localsend_isolates/isolate.dart';
 import 'package:localsend_isolates/model/device.dart';
@@ -515,6 +516,16 @@ class SendNotifier extends Notifier<Map<String, SendSessionState>> {
       _logger.info('Transfer was canceled.');
     } else {
       final hasError = ref.read(fileTransferProvider).getStatuses(sessionId).any((status) => status == FileStatus.failed);
+      if (!hasError) {
+        // Quick Send: lets the home screen show "Sent" (background sessions are removed below).
+        QsTransferEvents.notifySent(
+          QsSentEvent(
+            fingerprint: sessionState.target.fingerprint,
+            alias: sessionState.target.alias,
+            fileCount: sessionState.files.values.where((f) => f.token != null).length,
+          ),
+        );
+      }
       if (!hasError && sessionState.background == true) {
         // close session because everything is fine and it is in background
         closeSession(sessionId);

@@ -8,9 +8,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:localsend_app/config/refena.dart';
 import 'package:localsend_app/config/theme.dart';
+import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/pages/home_page.dart';
 import 'package:localsend_app/pages/home_page_controller.dart';
-import 'package:localsend_app/pages/whats_new_page.dart';
 import 'package:localsend_app/provider/animation_provider.dart';
 import 'package:localsend_app/provider/app_arguments_provider.dart';
 import 'package:localsend_app/provider/device_info_provider.dart';
@@ -26,6 +26,10 @@ import 'package:localsend_app/provider/settings_provider.dart';
 import 'package:localsend_app/provider/tv_provider.dart';
 import 'package:localsend_app/provider/version_provider.dart';
 import 'package:localsend_app/provider/window_dimensions_provider.dart';
+import 'package:localsend_app/quick_send/auto_update.dart';
+import 'package:localsend_app/quick_send/autostart_offer.dart';
+import 'package:localsend_app/quick_send/desktop_notify.dart';
+import 'package:localsend_app/quick_send/single_instance.dart';
 import 'package:localsend_app/util/i18n.dart';
 import 'package:localsend_app/util/native/autostart_helper.dart';
 import 'package:localsend_app/util/native/cache_helper.dart';
@@ -102,6 +106,11 @@ Future<RefenaContainer> preInit(List<String> args) async {
     // Check if this app is already open and let it "show up".
     // If this is the case, then exit the current instance.
 
+    // Quick Send: hand over through the local socket first; it also works while the receive server is off.
+    if (await QsSingleInstance.handOver(args)) {
+      exit(0);
+    }
+
     final handedOver = await notifyRunningInstance(
       securityContext: persistenceService.getSecurityContext(),
       port: persistenceService.getPort(),
@@ -120,6 +129,15 @@ Future<RefenaContainer> preInit(List<String> args) async {
       _logger.warning('Initializing tray failed: $e');
     }
 
+    // Quick Send: set up "Send with Quick Send" in the file manager once (can be turned off in settings).
+    if (defaultTargetPlatform == TargetPlatform.linux && !persistenceService.isQsContextMenuOffered()) {
+      if (await enableContextMenu(label: t.qsSettings.contextMenuLabel)) {
+        await persistenceService.setQsContextMenuOffered();
+      }
+    }
+    // Quick Send: drop the "Scripts > Quick Send" entry older builds installed.
+    await removeLegacyContextMenuScript();
+
     // initialize size and position
     await WindowManager.instance.ensureInitialized();
     if (checkPlatformIsNotWaylandDesktop()) {
@@ -128,6 +146,12 @@ Future<RefenaContainer> preInit(List<String> args) async {
     await WindowDimensionsController(persistenceService).initDimensionsConfiguration();
     if (args.contains(startHiddenFlag)) {
       // keep this app hidden
+      startHidden = true;
+    } else if (defaultTargetPlatform == TargetPlatform.linux &&
+        checkPlatformHasTray() &&
+        !args.contains('--show') &&
+        args.every((a) => a.startsWith('-'))) {
+      // Quick Send starts in the system tray on Linux; files passed on the command line open the window.
       startHidden = true;
     } else if (defaultTargetPlatform == TargetPlatform.macOS) {
       startHidden = await isLaunchedAsLoginItem() && await getLaunchAtLoginMinimized();
@@ -188,6 +212,16 @@ Future<RefenaContainer> preInit(List<String> args) async {
   );
 
   await container.redux(parentIsolateProvider).dispatchAsync(IsolateSetupAction());
+
+  // Quick Send: later launches (desktop entry, file manager menu) show this window and pass their files.
+  if (defaultTargetPlatform == TargetPlatform.linux) {
+    await QsSingleInstance.listen((launchArgs) {
+      unawaited(showFromTray());
+      if (launchArgs.any((a) => !a.startsWith('-'))) {
+        unawaited(container.global.dispatchAsync(_HandleAppStartArgumentsAction(args: launchArgs)));
+      }
+    });
+  }
 
   return container;
 }
@@ -309,17 +343,30 @@ Future<void> postInit(BuildContext context, Ref ref, bool appStart) async {
     ref.global.dispatchAsync(ClearCacheAction()); // ignore: unawaited_futures
   }
 
-  if (!ref.read(persistenceProvider).isFirstAppStart) {
-    WhatsNewPage? whatsNew = WhatsNewPage.fromLastVersion(lastVersion: ref.read(persistenceProvider).getWhatsNew());
-    if (whatsNew != null) {
-      // ignore: unawaited_futures
-      ref.global.dispatchAsync(NavigateAction.push(whatsNew));
-    }
-  }
-
+  // Quick Send: LocalSend's "What's new" page is not shown (it describes upstream releases).
   await ref.future(versionProvider).then((version) async {
     await ref.read(persistenceProvider).setWhatsNew(version.version);
+    // Quick Send: background updates (AppImage builds with a release repository and signing key only).
+    if (appStart) {
+      QsAutoUpdater.start(
+        currentVersion: version.version,
+        enabled: () => ref.read(persistenceProvider).isQsAutoUpdate(),
+        onInstalled: (newVersion) => unawaited(qsDesktopNotify('Quick Send', t.qsSettings.updateInstalled(version: newVersion))),
+      );
+    }
   });
+
+  // Quick Send (Linux): keep the autostart entry pointing at this executable, and offer autostart once.
+  if (appStart && defaultTargetPlatform == TargetPlatform.linux) {
+    await refreshLinuxAutoStartPath();
+    final persistence = ref.read(persistenceProvider);
+    if (!persistence.isQsAutoStartOffered()) {
+      await persistence.setQsAutoStartOffered();
+      if (!await isAutoStartEnabled() && context.mounted) {
+        unawaited(showAutoStartOffer(context));
+      }
+    }
+  }
 
   // [FOSS_REMOVE_START]
   if (checkPlatformSupportPayment()) {

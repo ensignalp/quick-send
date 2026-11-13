@@ -9,12 +9,12 @@ import 'package:localsend_app/pages/home_page.dart';
 import 'package:localsend_app/provider/local_ip_provider.dart';
 import 'package:localsend_app/provider/network/server/server_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
+import 'package:localsend_app/quick_send/title_bar_sync.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_app/util/ui/dynamic_colors.dart';
 import 'package:localsend_app/widget/watcher/life_cycle_watcher.dart';
 import 'package:localsend_app/widget/watcher/shortcut_watcher.dart';
 import 'package:localsend_app/widget/watcher/tray_watcher.dart';
-import 'package:localsend_app/widget/watcher/window_brightness_watcher.dart';
 import 'package:localsend_app/widget/watcher/window_watcher.dart';
 import 'package:localsend_isolates/isolate.dart';
 import 'package:refena_flutter/addons.dart';
@@ -92,8 +92,8 @@ class QuickSendApp extends StatelessWidget {
               theme: getTheme(colorMode, customColor, Brightness.light, dynamicColors),
               darkTheme: getTheme(colorMode, customColor, Brightness.dark, dynamicColors),
               themeMode: colorMode == ColorMode.oled ? ThemeMode.dark : themeMode,
-              builder: (context, child) => WindowBrightnessWatcher(child: child!),
               navigatorKey: context.read(navigationProvider).key,
+              builder: (context, child) => QsTitleBarSync(child: child ?? const SizedBox()),
               home: RouterinoHome(
                 builder: () => const HomePage(
                   initialTab: HomeTab.receive,

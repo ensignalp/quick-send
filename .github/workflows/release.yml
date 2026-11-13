@@ -1,5 +1,5 @@
 # Quick Send release pipeline: builds signed Android APK/AAB, Linux AppImage
-# and RPM, then creates a GitHub Release for tags like v0.1.0.
+# and RPM, then creates a GitHub Release for tags like v1.0.0.
 # Signing material comes only from repository secrets (see docs/RELEASE.md).
 name: Release
 
@@ -50,8 +50,8 @@ jobs:
           QS_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           QS_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           QS_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          QS_VERSION_CODE: ${{ github.run_number }}
           QS_RELEASES_REPO: ${{ github.repository }}
+          QS_UPDATE_PUBLIC_KEY: ${{ vars.QS_UPDATE_PUBLIC_KEY }}
         run: ./gradlew --no-daemon assembleRelease bundleRelease
       - name: Collect artifacts
         run: |
@@ -89,7 +89,8 @@ jobs:
           flutter pub get
           # Newer libayatana marks tray_manager's API deprecated; don't fail on it.
           export CXXFLAGS=-Wno-error=deprecated-declarations
-          flutter build linux --release --dart-define=QS_RELEASES_REPO=${{ github.repository }}
+          flutter build linux --release --dart-define=QS_RELEASES_REPO=${{ github.repository }} --dart-define=QS_UPDATE_PUBLIC_KEY=${{ vars.QS_UPDATE_PUBLIC_KEY }}
+          sh ../support/build/linux/bundle-internet-helper.sh
       - name: Build RPM
         run: packaging/rpm/build-rpm.sh
       - uses: actions/upload-artifact@v6
@@ -111,7 +112,28 @@ jobs:
       - name: Checksums
         working-directory: dist
         run: sha256sum * > SHA256SUMS.txt
+      - name: Sign checksums (background updates verify this signature)
+        working-directory: dist
+        env:
+          QS_UPDATE_SIGNING_KEY: ${{ secrets.QS_UPDATE_SIGNING_KEY }}
+        run: |
+          if [ -z "$QS_UPDATE_SIGNING_KEY" ]; then
+            echo "QS_UPDATE_SIGNING_KEY secret missing: releases will not be installed by background updates" >&2
+            exit 0
+          fi
+          umask 077
+          printf '%s\n' "$QS_UPDATE_SIGNING_KEY" > "$RUNNER_TEMP/update-key.pem"
+          openssl dgst -sha256 -sign "$RUNNER_TEMP/update-key.pem" -out SHA256SUMS.txt.sig SHA256SUMS.txt
+          openssl ec -in "$RUNNER_TEMP/update-key.pem" -pubout -out "$RUNNER_TEMP/update-pub.pem"
+          openssl dgst -sha256 -verify "$RUNNER_TEMP/update-pub.pem" -signature SHA256SUMS.txt.sig SHA256SUMS.txt
+          rm -f "$RUNNER_TEMP/update-key.pem"
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "Quick Send $GITHUB_REF_NAME" --generate-notes
+        run: |
+          # A release published by hand (tested local artifacts) is left alone.
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists; not replacing its assets."
+            exit 0
+          fi
+          gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "Quick Send $GITHUB_REF_NAME" --generate-notes

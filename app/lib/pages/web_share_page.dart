@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:localsend_app/config/theme.dart';
@@ -7,6 +8,7 @@ import 'package:localsend_app/model/state/server/web_share_state.dart';
 import 'package:localsend_app/provider/local_ip_provider.dart';
 import 'package:localsend_app/provider/network/server/server_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
+import 'package:localsend_app/quick_send/qs_style.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_app/util/ui/snackbar.dart';
 import 'package:localsend_app/widget/dialogs/pin_dialog.dart';
@@ -42,6 +44,9 @@ class _WebSharePageState extends State<WebSharePage> with Refena {
   _ServerState _stateEnum = _ServerState.initializing;
   bool _encrypted = false;
   String? _initializedError;
+
+  /// Quick Send: with several local IPs, one link is shown and the IP is chosen from a dropdown.
+  String? _chosenIp;
 
   bool get _sendMode => widget.files != null;
 
@@ -182,8 +187,16 @@ class _WebSharePageState extends State<WebSharePage> with Refena {
             return ResponsiveListView(
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
               children: [
-                Text(t.webSharePage.openLink(n: networkState.localIps.length), style: Theme.of(context).textTheme.titleMedium),
+                Text(t.webSharePage.openLink(n: 1), style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 10),
+                if (networkState.localIps.length > 1) ...[
+                  QsDropdown<String>(
+                    value: networkState.localIps.contains(_chosenIp) ? _chosenIp! : networkState.localIps.first,
+                    options: [for (final ip in networkState.localIps) (ip, ip)],
+                    onChanged: (ip) => setState(() => _chosenIp = ip),
+                  ),
+                  const SizedBox(height: 10),
+                ],
                 Card(
                   color: Theme.of(context).colorScheme.secondaryContainer,
                   child: Padding(
@@ -191,7 +204,7 @@ class _WebSharePageState extends State<WebSharePage> with Refena {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ...networkState.localIps.map((ip) {
+                        ...[networkState.localIps.contains(_chosenIp) ? _chosenIp! : networkState.localIps.firstOrNull].nonNulls.map((ip) {
                           final url = '${_encrypted ? 'https' : 'http'}://$ip:${serverState.port}';
                           final urlWithPin = switch (pin) {
                             String() => '$url/?pin=${Uri.encodeQueryComponent(pin)}',

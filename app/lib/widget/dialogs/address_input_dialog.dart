@@ -10,6 +10,8 @@ import 'package:localsend_app/provider/http_provider.dart';
 import 'package:localsend_app/provider/last_devices.provider.dart';
 import 'package:localsend_app/provider/local_ip_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
+import 'package:localsend_app/quick_send/qs_style.dart';
+import 'package:localsend_app/util/device_type_ext.dart';
 import 'package:localsend_app/widget/dialogs/error_dialog.dart';
 import 'package:localsend_isolates/model/device.dart';
 import 'package:localsend_isolates/rust/api/model.dart';
@@ -46,6 +48,10 @@ class _AddressInputDialogState extends State<AddressInputDialog> with Refena {
   bool _fetching = false;
   String? _error;
 
+  /// Quick Send: network (IP prefix) the hashtag is tried on; [_allNetworks] tries every local network.
+  static const _allNetworks = '';
+  String _network = _allNetworks;
+
   Future<void> _submit(List<String> localIps, int port, [String? candidate]) async {
     final List<String> candidates;
     final String input = _input.trim();
@@ -54,7 +60,8 @@ class _AddressInputDialogState extends State<AddressInputDialog> with Refena {
     } else if (_mode == _InputMode.ip) {
       candidates = [input];
     } else {
-      candidates = localIps.map((ip) => '${ip.ipPrefix}.$input').toList();
+      final networks = _network == _allNetworks ? localIps : localIps.where((ip) => ip.ipPrefix == _network);
+      candidates = networks.map((ip) => '${ip.ipPrefix}.$input').toList();
     }
 
     setState(() {
@@ -63,8 +70,10 @@ class _AddressInputDialogState extends State<AddressInputDialog> with Refena {
 
     final https = ref.read(settingsProvider).https;
 
-    final deviceCompleter = Completer<void>();
-    Device? foundDevice;
+    // Quick Send: every answering device is collected. When the number was tried on several
+    // networks, the user always picks the device; one is never chosen automatically.
+    final found = ValueNotifier<List<Device>>(const []);
+    final firstFound = Completer<void>();
     String? error;
 
     final payload = ref.read(deviceFullInfoProvider).toRegisterDto();
@@ -83,36 +92,47 @@ class _AddressInputDialogState extends State<AddressInputDialog> with Refena {
                   payload: payload,
                 );
 
-            foundDevice = response.body.toDevice(ip, port, https);
-            deviceCompleter.complete();
+            final device = response.body.toDevice(ip, port, https);
+            if (!found.value.any((d) => d.fingerprint == device.fingerprint)) {
+              found.value = [...found.value, device];
+            }
+            if (!firstFound.isCompleted) {
+              firstFound.complete();
+            }
           } catch (e) {
             error = e.toString();
-            rethrow;
           }
         }(),
     ];
+    final allDone = Future.wait(futures);
 
     // Wait until,
     // - a device is found
     // - all candidates are checked
-    try {
-      await Future.any([
-        deviceCompleter.future,
-        Future.wait(futures),
-      ]);
-    } catch (_) {}
+    await Future.any([firstFound.future, allDone]);
 
     if (!mounted) {
       return;
     }
 
-    if (foundDevice != null) {
-      ref.redux(lastDevicesProvider).dispatch(AddLastDeviceAction(foundDevice!));
-      context.pop(foundDevice);
+    Device? device = found.value.firstOrNull;
+    if (device != null && candidates.length > 1) {
+      device = await showDialog<Device>(
+        context: context,
+        builder: (_) => _DeviceChoiceDialog(found: found, searching: allDone),
+      );
+      if (!mounted) {
+        return;
+      }
+    }
+
+    if (device != null) {
+      ref.redux(lastDevicesProvider).dispatch(AddLastDeviceAction(device));
+      context.pop(device);
     } else {
       setState(() {
         _fetching = false;
-        _error = error;
+        _error = found.value.isEmpty ? error : null;
       });
     }
   }
@@ -175,15 +195,23 @@ class _AddressInputDialogState extends State<AddressInputDialog> with Refena {
                 style: const TextStyle(color: Colors.grey),
               )
             else ...[
-              Text(
-                '${t.dialogs.addressInput.ip}:',
-                style: const TextStyle(color: Colors.grey),
+              // Quick Send: several local networks; the user picks which one(s) the number is tried on.
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Text('${t.shareHome.network}: ', style: const TextStyle(color: Colors.grey)),
+                  Flexible(
+                    child: QsDropdown<String>(
+                      value: localIps.any((ip) => ip.ipPrefix == _network) ? _network : _allNetworks,
+                      options: [
+                        (_allNetworks, t.qsSettings.allNetworks),
+                        for (final ip in localIps) (ip.ipPrefix, '${ip.ipPrefix}.${_input.isEmpty ? '…' : _input}'),
+                      ],
+                      onChanged: (network) => setState(() => _network = network),
+                    ),
+                  ),
+                ],
               ),
-              for (final ip in localIps)
-                Text(
-                  '- ${ip.ipPrefix}.$_input',
-                  style: const TextStyle(color: Colors.grey),
-                ),
             ],
           ] else ...[
             if (lastDevices.isEmpty)
@@ -262,5 +290,71 @@ extension on List<String> {
   List<String> get uniqueIpPrefix {
     final seen = <String>{};
     return where((s) => seen.add(s.ipPrefix)).toList();
+  }
+}
+
+/// Quick Send: lists the devices that answered on different networks so the user picks one.
+/// The list grows while the remaining networks are still being checked.
+class _DeviceChoiceDialog extends StatelessWidget {
+  final ValueNotifier<List<Device>> found;
+  final Future<void> searching;
+
+  const _DeviceChoiceDialog({required this.found, required this.searching});
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(t.shareHome.chooseDevice),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(t.shareHome.chooseDeviceHint),
+            const SizedBox(height: 12),
+            ValueListenableBuilder<List<Device>>(
+              valueListenable: found,
+              builder: (context, devices, _) => Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final device in devices)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(device.deviceType.icon),
+                      title: Text(device.alias),
+                      subtitle: Text([device.ip, device.deviceModel].nonNulls.join(' · ')),
+                      onTap: () => Navigator.of(context).pop(device),
+                    ),
+                ],
+              ),
+            ),
+            FutureBuilder<void>(
+              future: searching,
+              builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(t.shareHome.searchingNetworks, style: const TextStyle(color: Colors.grey)),
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(t.general.cancel),
+        ),
+      ],
+    );
   }
 }

@@ -4,7 +4,7 @@ Quick Send, aynı yerel ağdaki cihazlar arasında dosya ve mesaj aktarır. Andr
 
 Quick Send, [LocalSend](https://github.com/localsend/localsend) tabanlıdır. Apache-2.0 lisansı ve upstream telif bildirimleri korunmuştur; ayrıntılar için [NOTICE](NOTICE) ve [LICENSE](LICENSE) dosyalarına bakın. Uygulamanın Hakkında ekranında da LocalSend atfı bulunur.
 
-Geliştirici: Muhammed Alparslan Sancaktar · Ensignsoft.
+Geliştirici: Muhammed Alparslan Sancaktar ·Founder Of Ensignsoft.
 
 ## Android
 

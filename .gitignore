@@ -24,3 +24,6 @@
 # Generated at build time by makepri (see support/scripts/compile_windows_msix_helper.ps1)
 /support/build/msix/content/resources.pri
 /build/
+
+# Quick Send: local release artifacts
+/dist/

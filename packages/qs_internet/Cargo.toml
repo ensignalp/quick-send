@@ -1,0 +1,28 @@
+[package]
+name = "qs_internet"
+version = "1.0.0"
+edition = "2024"
+license = "Apache-2.0"
+description = "Quick Send: transfers between different networks over iroh (QUIC, hole punching, encrypted relay fallback)"
+
+[workspace]
+
+[dependencies]
+anyhow = "1.0"
+iroh = "1.4"
+iroh-blobs = "0.104"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+futures-util = "0.3"
+tokio-util = "0.7"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[[bin]]
+name = "qs-internet"
+path = "src/bin/qs-internet.rs"
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true

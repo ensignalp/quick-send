@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/model/state/server/receive_session_state.dart';
 import 'package:localsend_app/model/state/server/receiving_file.dart';
 import 'package:localsend_app/pages/home_page.dart';
@@ -17,11 +18,14 @@ import 'package:localsend_app/provider/logging/discovery_logs_provider.dart';
 import 'package:localsend_app/provider/network/send_provider.dart';
 import 'package:localsend_app/provider/network/server/server_provider.dart';
 import 'package:localsend_app/provider/network/server/server_utils.dart';
+import 'package:localsend_app/provider/persistence_provider.dart';
 import 'package:localsend_app/provider/receive_history_provider.dart';
 import 'package:localsend_app/provider/security_provider.dart';
 import 'package:localsend_app/provider/selection/selected_receiving_files_provider.dart';
 import 'package:localsend_app/provider/selection/selected_sending_files_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
+import 'package:localsend_app/quick_send/desktop_notify.dart';
+import 'package:localsend_app/quick_send/trusted_only.dart';
 import 'package:localsend_app/util/native/directories.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_app/util/native/tray_helper.dart';
@@ -125,6 +129,14 @@ class ReceiveController {
           sessionId: sessionId,
           statuses: {for (final file in files.values) file.id: FileStatus.queue},
         );
+
+    // Quick Send: "trusted devices only" declines everyone else, except while the Receive screen is open.
+    final senderTrusted = server.ref.read(favoritesProvider).any((e) => e.fingerprint == senderFingerprint);
+    if (!senderTrusted && server.ref.read(persistenceProvider).isTrustedOnly() && !QsReceiveScreen.isOpen) {
+      _logger.info('Declining request from untrusted device (trusted-only mode)');
+      declineFileRequest();
+      return;
+    }
 
     bool quickSave = settings.quickSave && server.getState().session?.message == null;
     final quickSaveFromFavorites = settings.quickSaveFromFavorites && server.getState().session?.message == null;
@@ -441,6 +453,11 @@ class ReceiveController {
             );
           }
         });
+      }
+      // Quick Send: tell the user when files arrived while the window was hidden (e.g. auto-accepted from a trusted device).
+      if (!hasError && checkPlatform([TargetPlatform.linux]) && !QsReceiveScreen.windowVisible) {
+        final count = statuses.where((s) => s == FileStatus.finished).length;
+        unawaited(qsDesktopNotify(t.shareHome.receivedFrom(name: session.senderAlias), t.shareHome.receivedFiles(n: count)));
       }
       _logger.info('Received all files.');
     }

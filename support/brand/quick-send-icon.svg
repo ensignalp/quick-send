@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Quick Send app icon: white mark on the brand blue. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4C8DFF"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="232" fill="url(#bg)"/>
+  <g transform="translate(512 512) scale(0.86) translate(-557.5 -550)">
+    <path fill="#FFFFFF" fill-rule="evenodd" d="M334 212H828V705H645V888H465A178 178 0 0 1 339 584L526 397H334Z M645 535V705H475Z"/>
+  </g>
+</svg>

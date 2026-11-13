@@ -77,6 +77,21 @@ object QuickSendNotifications {
     manager(context).notify(requestNotificationId(sessionId), notification)
   }
 
+  /** "Received" confirmation, e.g. for files accepted automatically while the app was in the background. */
+  fun received(context: Context, sessionId: String, sender: String, count: Int) {
+    ensureChannel(context)
+    val tr = context.resources.configuration.locales[0].language == "tr"
+    val notification = builder(context)
+      .setContentTitle(if (tr) "Alındı" else "Received")
+      .setContentText(if (tr) "$sender · $count dosya · İndirilenler/Quick Send" else "$sender · $count ${if (count == 1) "file" else "files"} · Downloads/Quick Send")
+      .setCategory(Notification.CATEGORY_STATUS)
+      .setAutoCancel(true)
+      .build()
+    manager(context).notify(RECEIVED_ID + (sessionId.hashCode() and 0x0fff), notification)
+  }
+
+  private const val RECEIVED_ID = 8300
+
   private fun requestNotificationId(sessionId: String) = REQUEST_ID + (sessionId.hashCode() and 0x0fff)
 
   private fun action(context: Context, action: String, sessionId: String, accepted: Boolean): PendingIntent {

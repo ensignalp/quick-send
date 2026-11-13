@@ -8,7 +8,7 @@
 %global __requires_exclude ^(libflutter_linux_gtk|libapp|librust_lib_localsend_app|libdartjni|lib.*_plugin|libjvm)\\.so.*$
 
 Name:           quicksend
-Version:        %{?qs_version}%{!?qs_version:0.1.0}
+Version:        %{?qs_version}%{!?qs_version:1.0.0}
 Release:        1%{?dist}
 Summary:        Share files securely over your local network
 License:        Apache-2.0
@@ -68,9 +68,13 @@ fi
 %{_bindir}/quicksend
 %{_datadir}/applications/com.ensignsoft.quicksend.desktop
 %{_metainfodir}/com.ensignsoft.quicksend.metainfo.xml
-%{_datadir}/icons/hicolor/*/apps/com.ensignsoft.quicksend*.png
+%{_datadir}/icons/hicolor/*/apps/com.ensignsoft.quicksend*
 %{_prefix}/lib/firewalld/services/quicksend.xml
 
 %changelog
+* Wed Nov 11 2026 Muhammed Alparslan Sancaktar <codealpx@gmail.com> - 1.0.0-1
+- Quick Send 1.0.0: phone-style desktop layout, GNOME title bar, trusted auto-accept
+  in the background, signed background updates
+
 * Sun Nov 08 2026 Muhammed Alparslan Sancaktar <codealpx@gmail.com> - 0.1.0-1
 - Initial Quick Send package

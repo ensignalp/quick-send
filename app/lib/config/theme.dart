@@ -6,15 +6,37 @@ import 'package:localsend_app/provider/device_info_provider.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_app/util/ui/dynamic_colors.dart';
 import 'package:refena_flutter/refena_flutter.dart';
-import 'package:yaru/yaru.dart' as yaru;
 
 final _borderRadius = BorderRadius.circular(5);
 
-ThemeData getTheme(ColorMode colorMode, Color customColor, Brightness brightness, DynamicColors? dynamicColors) {
-  if (colorMode == ColorMode.yaru) {
-    return _getYaruTheme(brightness);
-  }
+/// Quick Send: the one typeface used everywhere (bundled in assets/fonts, see pubspec.yaml).
+const qsFontFamily = 'SpaceGrotesk';
 
+/// Quick Send: platform fonts used only for glyphs Space Grotesk does not cover (e.g. CJK).
+/// https://github.com/localsend/localsend/issues/52
+List<String>? qsFontFamilyFallback() {
+  if (checkPlatform([TargetPlatform.windows])) {
+    return switch (LocaleSettings.currentLocale) {
+      AppLocale.ja => const ['Yu Gothic UI'],
+      AppLocale.ko => const ['Malgun Gothic'],
+      AppLocale.zhCn => const ['Microsoft YaHei UI'],
+      AppLocale.zhHk || AppLocale.zhTw => const ['Microsoft JhengHei UI'],
+      _ => const ['Segoe UI Variable Display'],
+    };
+  }
+  if (checkPlatform([TargetPlatform.linux])) {
+    return switch (LocaleSettings.currentLocale) {
+      AppLocale.ja => const ['Noto Sans CJK JP'],
+      AppLocale.ko => const ['Noto Sans CJK KR'],
+      AppLocale.zhCn => const ['Noto Sans CJK SC'],
+      AppLocale.zhHk || AppLocale.zhTw => const ['Noto Sans CJK TC'],
+      _ => const ['Noto Sans'],
+    };
+  }
+  return null;
+}
+
+ThemeData getTheme(ColorMode colorMode, Color customColor, Brightness brightness, DynamicColors? dynamicColors) {
   final colorScheme = _determineColorScheme(colorMode, customColor, brightness, dynamicColors);
 
   final lightInputBorder = OutlineInputBorder(
@@ -26,28 +48,6 @@ ThemeData getTheme(ColorMode colorMode, Color customColor, Brightness brightness
     borderSide: BorderSide(color: colorScheme.secondaryContainer),
     borderRadius: _borderRadius,
   );
-
-  // https://github.com/localsend/localsend/issues/52
-  final String? fontFamily;
-  if (checkPlatform([TargetPlatform.windows])) {
-    fontFamily = switch (LocaleSettings.currentLocale) {
-      AppLocale.ja => 'Yu Gothic UI',
-      AppLocale.ko => 'Malgun Gothic',
-      AppLocale.zhCn => 'Microsoft YaHei UI',
-      AppLocale.zhHk || AppLocale.zhTw => 'Microsoft JhengHei UI',
-      _ => 'Segoe UI Variable Display',
-    };
-  } else if (checkPlatform([TargetPlatform.linux])) {
-    fontFamily = switch (LocaleSettings.currentLocale) {
-      AppLocale.ja => 'Noto Sans CJK JP',
-      AppLocale.ko => 'Noto Sans CJK KR',
-      AppLocale.zhCn => 'Noto Sans CJK SC',
-      AppLocale.zhHk || AppLocale.zhTw => 'Noto Sans CJK TC',
-      _ => 'Noto Sans',
-    };
-  } else {
-    fontFamily = null;
-  }
 
   return ThemeData(
     colorScheme: colorScheme,
@@ -78,7 +78,8 @@ ThemeData getTheme(ColorMode colorMode, Color customColor, Brightness brightness
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
     ),
-    fontFamily: fontFamily,
+    fontFamily: qsFontFamily,
+    fontFamilyFallback: qsFontFamilyFallback(),
   );
 }
 
@@ -152,7 +153,6 @@ ColorScheme _determineColorScheme(ColorMode mode, Color customColor, Brightness 
     ColorMode.oled => (dynamicColors?.dark ?? defaultColorScheme).copyWith(
       surface: Colors.black,
     ),
-    ColorMode.yaru => throw 'Should reach here',
     ColorMode.custom => ColorScheme.fromSeed(
       seedColor: customColor,
       brightness: brightness,
@@ -160,50 +160,4 @@ ColorScheme _determineColorScheme(ColorMode mode, Color customColor, Brightness 
   };
 
   return colorScheme ?? defaultColorScheme;
-}
-
-ThemeData _getYaruTheme(Brightness brightness) {
-  final baseTheme = brightness == Brightness.light ? yaru.yaruLight : yaru.yaruDark;
-  final colorScheme = baseTheme.colorScheme;
-
-  final lightInputBorder = OutlineInputBorder(
-    borderSide: BorderSide(color: colorScheme.secondaryContainer),
-    borderRadius: _borderRadius,
-  );
-
-  final darkInputBorder = OutlineInputBorder(
-    borderSide: BorderSide(color: colorScheme.secondaryContainer),
-    borderRadius: _borderRadius,
-  );
-
-  InputDecorationThemeData;
-
-  return baseTheme.copyWith(
-    // same density on all platforms so desktop matches mobile (defaults to compact on desktop)
-    visualDensity: VisualDensity.standard,
-    navigationBarTheme: colorScheme.brightness == Brightness.dark
-        ? NavigationBarThemeData(
-            iconTheme: WidgetStateProperty.all(const IconThemeData(color: Colors.white)),
-          )
-        : null,
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: colorScheme.secondaryContainer,
-      border: colorScheme.brightness == Brightness.light ? lightInputBorder : darkInputBorder,
-      focusedBorder: colorScheme.brightness == Brightness.light ? lightInputBorder : darkInputBorder,
-      enabledBorder: colorScheme.brightness == Brightness.light ? lightInputBorder : darkInputBorder,
-      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        foregroundColor: colorScheme.brightness == Brightness.dark ? Colors.white : null,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      ),
-    ),
-    textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      ),
-    ),
-  );
 }

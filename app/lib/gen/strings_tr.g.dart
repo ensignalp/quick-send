@@ -93,6 +93,14 @@ class TranslationsTr extends Translations with BaseTranslations<AppLocale, Trans
   late final _Translations$web$tr web = _Translations$web$tr._(_root);
   @override
   late final _Translations$assetPicker$tr assetPicker = _Translations$assetPicker$tr._(_root);
+  @override
+  late final _Translations$shareHome$tr shareHome = _Translations$shareHome$tr._(_root);
+  @override
+  late final _Translations$qsSettings$tr qsSettings = _Translations$qsSettings$tr._(_root);
+  @override
+  late final _Translations$qsInternet$tr qsInternet = _Translations$qsInternet$tr._(_root);
+  @override
+  late final _Translations$qsTray$tr qsTray = _Translations$qsTray$tr._(_root);
 }
 
 // Path: general
@@ -784,6 +792,369 @@ class _Translations$assetPicker$tr extends Translations$assetPicker$en {
   String get sNameDurationLabel => 'süre';
   @override
   String get sUnitAssetCountLabel => 'sayım';
+}
+
+// Path: shareHome
+class _Translations$shareHome$tr extends Translations$shareHome$en {
+  _Translations$shareHome$tr._(TranslationsTr root) : this._root = root, super.internal(root);
+
+  final TranslationsTr _root; // ignore: unused_field
+
+  // Translations
+  @override
+  String sentTo({required Object name}) => '${name} cihazına gönderildi';
+  @override
+  String get received => 'Alındı';
+  @override
+  String receivedFrom({required Object name}) => '${name} cihazından alındı';
+  @override
+  String receivedFiles({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('tr'))(
+    n,
+    one: '1 dosya',
+    other: '${n} dosya',
+  );
+  @override
+  String get whoCanShare => 'Seninle kim paylaşabilir';
+  @override
+  String get everyone => 'Herkes';
+  @override
+  String get noOne => 'Hiç kimse';
+  @override
+  String get tenMinutes => 'Yalnızca 10 dakika';
+  @override
+  String get everyoneTenMinutes => '10 dakikalığına herkes';
+  @override
+  String remaining({required Object time}) => 'Herkese görünür · ${time} kaldı';
+  @override
+  String get selectedItems => 'Seçilen öğeler';
+  @override
+  String items({required Object n}) => '${n} öğe';
+  @override
+  String get noSelection => 'Hiçbir şey seçilmedi';
+  @override
+  String get noSelectionHint => 'Dosyaları buraya sürükle ya da ekle, sonra bir cihaza tıkla.';
+  @override
+  String get add => 'Ekle';
+  @override
+  String get clear => 'Temizle';
+  @override
+  String get clickDevice => 'Dosya göndermek istediğin cihaza tıkla.';
+  @override
+  String get looking => 'Yakındaki cihazlar aranıyor';
+  @override
+  String get lookingHint => 'Diğer cihazda Quick Send ya da LocalSend\'i aç ve iki cihazı aynı ağa bağla.';
+  @override
+  String get qrOrLink => 'QR kod ya da bağlantı';
+  @override
+  String get sending => 'Gönderiliyor…';
+  @override
+  String get waiting => 'Bekleniyor…';
+  @override
+  String get sent => 'Gönderildi';
+  @override
+  String get declined => 'Reddedildi';
+  @override
+  String get failed => 'Başarısız';
+  @override
+  String get phone => 'Telefon';
+  @override
+  String get computer => 'Bilgisayar';
+  @override
+  String get browser => 'Tarayıcı';
+  @override
+  String get server => 'Sunucu';
+  @override
+  String get deviceInfo => 'Bu cihaz';
+  @override
+  String get more => 'Diğer seçenekler';
+  @override
+  String get help => 'Yardım';
+  @override
+  String get details => 'Cihaz ayrıntıları';
+  @override
+  String get offlineHint => 'Alma kapalı';
+  @override
+  String get clipboard => 'Panoyu gönder';
+  @override
+  String get trust => 'Bu cihaza güven';
+  @override
+  String get untrust => 'Güvenmeyi bırak';
+  @override
+  String get trusted => 'Güvenilir';
+  @override
+  String get receiveTab => 'Al';
+  @override
+  String get sendTab => 'Gönder';
+  @override
+  String get readyTitle => 'Almaya hazır…';
+  @override
+  String get readyHint => 'Bu ekrandayken yakındaki herkes sizinle paylaşım yapabilir.';
+  @override
+  String get readyOff => 'Alma kullanılamıyor';
+  @override
+  String get readyOffHint => 'Ağ bağlantını kontrol edip yeniden dene.';
+  @override
+  String get goSettingsPrefix => 'Bu ekranda olmasanız bile kimin sizinle her zaman paylaşım yapabileceğini seçmek için ';
+  @override
+  String get goSettingsLink => 'ayarlara gidin';
+  @override
+  String get chooseTitle => 'Neler paylaşılacağını seçin';
+  @override
+  String get chooseButton => 'Dosyaları seç';
+  @override
+  String get nearby => 'Yakındaki cihazlar';
+  @override
+  String get tapDevice => 'Göndermek için bir cihaza tıkla.';
+  @override
+  String get infoTitle => 'Bu cihaz';
+  @override
+  String get address => 'Adres';
+  @override
+  String get protocol => 'Protokol';
+  @override
+  String get protocolValue => 'LocalSend v2 · HTTPS (şifreli)';
+  @override
+  String get noNetwork => 'Bir ağa bağlı değil';
+  @override
+  String get statusEveryone => 'Yakındaki herkes seninle paylaşım yapabilir';
+  @override
+  String get statusTrusted => 'Yalnızca güvenilir cihazlar paylaşım yapabilir';
+  @override
+  String get statusOff => 'Kimse seninle paylaşım yapamaz';
+  @override
+  String get history => 'Son etkinlik';
+  @override
+  String get network => 'Ağ';
+  @override
+  String get chooseDevice => 'Hangi cihaz?';
+  @override
+  String get chooseDeviceHint => 'Bu numara birden fazla ağda denendi. Göndermek istediğin cihazı seç. Güvenliğin için otomatik seçim yapılmaz.';
+  @override
+  String get searchingNetworks => 'Diğer ağlar kontrol ediliyor…';
+}
+
+// Path: qsSettings
+class _Translations$qsSettings$tr extends Translations$qsSettings$en {
+  _Translations$qsSettings$tr._(TranslationsTr root) : this._root = root, super.internal(root);
+
+  final TranslationsTr _root; // ignore: unused_field
+
+  // Translations
+  @override
+  String get autostartOfferTitle => 'Quick Send oturum açılınca başlasın mı?';
+  @override
+  String get autostartOfferBody =>
+      'Böylece oturum açtığında sistem tepsisinde bekler; yakındaki ve güvenilir cihazlar uygulamayı açmadan sana dosya gönderebilir. Ayarlar › Masaüstü\'nden değiştirebilirsin.';
+  @override
+  String get autostartOfferYes => 'Oturum açılınca başlat';
+  @override
+  String get autostartOfferNo => 'Şimdi değil';
+  @override
+  String get autoUpdate => 'Otomatik güncelleme';
+  @override
+  String get autoUpdateDesc => 'Yeni sürümleri arka planda indir, doğrula ve kur';
+  @override
+  String updateInstalled({required Object version}) => 'Quick Send ${version} kuruldu. Uygulamayı bir sonraki açışında başlar.';
+  @override
+  String get updateUnavailable => 'Bu derlemede kullanılamaz';
+  @override
+  String get general => 'Genel';
+  @override
+  String get deviceName => 'Cihaz adı';
+  @override
+  String get deviceNameHint => 'Yakındaki cihazlara bu ad görünür';
+  @override
+  String get useSystemName => 'Sistem adını kullan';
+  @override
+  String get theme => 'Tema';
+  @override
+  String get themeSystem => 'Sistem';
+  @override
+  String get themeLight => 'Açık';
+  @override
+  String get themeDark => 'Koyu';
+  @override
+  String get language => 'Dil';
+  @override
+  String get autostart => 'Sistem başlangıcında çalıştır';
+  @override
+  String get autostartDesc => 'Oturum açınca Quick Send\'i başlat';
+  @override
+  String get startHidden => 'Arkaplanda başlat';
+  @override
+  String get startHiddenDesc => 'Başlangıçta pencereyi açma';
+  @override
+  String get background => 'Arkaplanda çalışmaya devam et';
+  @override
+  String get backgroundDesc => 'Pencere kapatılınca Quick Send tepside dinlemeye devam eder';
+  @override
+  String get visibility => 'Görünürlük ve ağ';
+  @override
+  String get visHidden => 'Gizli';
+  @override
+  String get visTrusted => 'Güvenilir';
+  @override
+  String get visEveryone => 'Herkes';
+  @override
+  String get visHiddenDesc => 'Alma kapalı. Bu cihazı kimse göremez ve dosya gönderemez.';
+  @override
+  String get visTrustedDesc => 'Yalnızca güvenilir cihazlar dosya gönderebilir; diğer cihazların istekleri reddedilir.';
+  @override
+  String get visEveryoneDesc => 'Ağdaki herkes bu cihazı görebilir ve dosya gönderebilir.';
+  @override
+  String get network => 'Ağ arayüzü';
+  @override
+  String get allNetworks => 'Tüm ağlar';
+  @override
+  String get files => 'Dosya ve aktarım';
+  @override
+  String get destination => 'İndirme konumu';
+  @override
+  String get change => 'Değiştir';
+  @override
+  String get reset => 'Sıfırla';
+  @override
+  String get security => 'Güvenlik ve eşleşme';
+  @override
+  String get trustedDevices => 'Güvenilir cihazlar';
+  @override
+  String get trustedEmpty => 'Henüz güvenilir cihaz yok. Ana ekranda bir cihaza sağ tıklayıp “Bu cihaza güven”i seç.';
+  @override
+  String get autoAccept => 'Güvenilir cihazlardan otomatik kabul et';
+  @override
+  String get autoAcceptDesc => 'Dosyalar onay sorulmadan indirme konumuna kaydedilir';
+  @override
+  String get pin => 'PIN iste';
+  @override
+  String get pinDesc => 'Gönderen, burada gösterilen 4 haneli PIN\'i girmek zorunda';
+  @override
+  String pinValue({required Object pin}) => 'PIN: ${pin}';
+  @override
+  String get newPin => 'Yeni PIN';
+  @override
+  String get integration => 'Masaüstü entegrasyonu';
+  @override
+  String get contextMenu => 'Dosya yöneticisinde göster';
+  @override
+  String get contextMenuDesc => 'Dosyalar (Nautilus) ve Dolphin sağ tık menüsüne “Quick Send ile gönder” ekler';
+  @override
+  String get contextMenuLabel => 'Quick Send ile gönder';
+  @override
+  String get remove => 'Kaldır';
+  @override
+  String get secNearby => 'Yakından paylaşım';
+  @override
+  String get whoCanShare => 'Sizinle paylaşım yapabilenler';
+  @override
+  String get modeOff => 'Hiç kimse';
+  @override
+  String get modeTrusted => 'Güvenilir cihazlar';
+  @override
+  String get modeEveryone => 'Herkes';
+  @override
+  String get secReceive => 'Alım';
+  @override
+  String get quickSave => 'Hızlı kaydetme';
+  @override
+  String get quickSaveDesc => 'Her isteği otomatik kabul et';
+  @override
+  String get secLook => 'Görünüm';
+  @override
+  String get animations => 'Animasyonlar';
+  @override
+  String get secDesktop => 'Masaüstü';
+  @override
+  String get secNetwork => 'Ağ';
+  @override
+  String get serverTitle => 'Alma hizmeti';
+  @override
+  String serverRunning({required Object port}) => '${port} portunda çalışıyor';
+  @override
+  String get serverStopped => 'Durduruldu';
+  @override
+  String get restart => 'Yeniden başlat';
+  @override
+  String get secPrivacy => 'Gizlilik';
+  @override
+  String get privacyNotice => 'Gizlilik bildirimi';
+  @override
+  String get privacyText =>
+      'Yakın paylaşım yerel ağında çalışır: dosyalar ve mesajlar cihazlar arasında doğrudan, şifreli (HTTPS) bağlantıyla gider ve hiçbir sunucuya yüklenmez. "İnternet üzerinden" (yalnızca kullandığında) iki cihazı mümkünse doğrudan, değilse bir iroh aktarıcı sunucusu (varsayılan olarak n0) üzerinden bağlar; aktarıcı uçtan uca şifreli veriyi okuyamadan iletir, ancak aktarıcı ve diğer cihaz IP adresini görebilir. Paylaşım sürerken kodu bilen herkes o dosyaları indirebilir. Otomatik güncelleme açıkken yaklaşık 12 saatte bir ve elle denetlediğinde GitHub\'a (api.github.com) bağlanılır. Quick Send analiz veya kişisel veri toplamaz. Cihaz adın ve rastgele bir cihaz kimliği yalnızca aynı ağdaki cihazlarla, seni bulabilmeleri için paylaşılır.';
+  @override
+  String get aboutApp => 'Quick Send hakkında';
+  @override
+  String get saveHistoryDesc => 'Son etkinliği sakla';
+  @override
+  String get autoFinishDesc => 'Aktarım bitince aktarım ekranını kapat';
+}
+
+// Path: qsInternet
+class _Translations$qsInternet$tr extends Translations$qsInternet$en {
+  _Translations$qsInternet$tr._(TranslationsTr root) : this._root = root, super.internal(root);
+
+  final TranslationsTr _root; // ignore: unused_field
+
+  // Translations
+  @override
+  String get title => 'İnternet üzerinden';
+  @override
+  String get menu => 'İnternet üzerinden';
+  @override
+  String get intro =>
+      'Farklı ağlardaki cihazlar için (mobil veri, başka Wi-Fi). Dosyalar mümkünse doğrudan, değilse şifreli bir aktarıcı üzerinden gider. Paylaşım açıkken kodu bilen herkes indirebilir.';
+  @override
+  String get unavailable => 'Bu derlemede kullanılamaz.';
+  @override
+  String get send => 'Kodla gönder';
+  @override
+  String get pickFirst => 'Önce Gönder ekranında dosya seç';
+  @override
+  String get receive => 'Kodla al';
+  @override
+  String get receiveHint => 'Sana gönderilen kodu yapıştır';
+  @override
+  String get preparing => 'Dosyalar hazırlanıyor…';
+  @override
+  String get shareCode => 'Bu kodu diğer cihaza gönder (mesaj, e-posta…) ya da QR kodu okut. İndirilene kadar bu sayfayı açık tut.';
+  @override
+  String get waiting => 'Diğer cihaz bekleniyor…';
+  @override
+  String get peerConnected => 'Bağlandı, indiriliyor…';
+  @override
+  String get sent => 'Gönderildi ✓ — paylaşım sürüyor; bitince durdur.';
+  @override
+  String get stop => 'Paylaşımı durdur';
+  @override
+  String get enterCode => 'Kodu yapıştır:';
+  @override
+  String get receiveButton => 'Al';
+  @override
+  String get connecting => 'Gönderene bağlanılıyor…';
+  @override
+  String get openFolder => 'Klasörü aç';
+  @override
+  String get failed => 'Aktarım tamamlanmadı. Tekrar dene; kaldığı yerden devam eder.';
+}
+
+// Path: qsTray
+class _Translations$qsTray$tr extends Translations$qsTray$en {
+  _Translations$qsTray$tr._(TranslationsTr root) : this._root = root, super.internal(root);
+
+  final TranslationsTr _root; // ignore: unused_field
+
+  // Translations
+  @override
+  String get open => 'Quick Send\'i aç';
+  @override
+  String get sendFiles => 'Dosya gönder…';
+  @override
+  String get clipboard => 'Panoyu gönder';
+  @override
+  String get receive => 'Seninle kim paylaşabilir';
+  @override
+  String get settings => 'Ayarlar';
+  @override
+  String get quit => 'Quick Send\'den çık';
 }
 
 // Path: receiveTab.infoBox

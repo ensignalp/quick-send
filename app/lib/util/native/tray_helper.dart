@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:localsend_app/gen/assets.gen.dart';
 import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/provider/animation_provider.dart';
+import 'package:localsend_app/provider/persistence_provider.dart';
+import 'package:localsend_app/quick_send/trusted_only.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:logging/logging.dart';
 import 'package:refena_flutter/refena_flutter.dart';
@@ -14,6 +17,12 @@ final _logger = Logger('TrayHelper');
 
 enum TrayEntry {
   open,
+  sendFiles,
+  clipboard,
+  modeEveryone,
+  modeTrusted,
+  modeOff,
+  settings,
   close,
 }
 
@@ -41,17 +50,7 @@ Future<void> initTray() async {
       await tm.trayManager.setIcon(Assets.img.logo32.path);
     }
 
-    final items = [
-      tm.MenuItem(
-        key: TrayEntry.open.name,
-        label: t.tray.open,
-      ),
-      tm.MenuItem(
-        key: TrayEntry.close.name,
-        label: defaultTargetPlatform == TargetPlatform.windows ? t.tray.closeWindows : t.tray.close,
-      ),
-    ];
-    await tm.trayManager.setContextMenu(tm.Menu(items: items));
+    await refreshTrayMenu();
     // No Linux implementation for setToolTip available as of tray_manager 0.2.2
     // https://pub.dev/packages/tray_manager#api
     if (!checkPlatform([TargetPlatform.linux])) {
@@ -59,6 +58,43 @@ Future<void> initTray() async {
     }
   } catch (e) {
     _logger.warning('Failed to init tray', e);
+  }
+}
+
+/// Rebuilds the tray menu (the share mode checkmarks change at runtime).
+/// On Linux the tray is an AppIndicator, so any click opens this menu.
+Future<void> refreshTrayMenu() async {
+  if (!checkPlatformHasTray() || checkPlatform([TargetPlatform.macOS])) return;
+  String mode;
+  try {
+    mode = RefenaScope.defaultRef.read(persistenceProvider).getQsShareMode();
+  } catch (_) {
+    mode = 'trusted';
+  }
+  final items = [
+    tm.MenuItem(key: TrayEntry.open.name, label: t.qsTray.open),
+    tm.MenuItem.separator(),
+    tm.MenuItem(key: TrayEntry.sendFiles.name, label: t.qsTray.sendFiles),
+    tm.MenuItem(key: TrayEntry.clipboard.name, label: t.qsTray.clipboard),
+    tm.MenuItem.separator(),
+    tm.MenuItem.submenu(
+      label: t.qsTray.receive,
+      submenu: tm.Menu(
+        items: [
+          tm.MenuItem.checkbox(key: TrayEntry.modeEveryone.name, label: t.qsSettings.modeEveryone, checked: mode == 'everyone'),
+          tm.MenuItem.checkbox(key: TrayEntry.modeTrusted.name, label: t.qsSettings.modeTrusted, checked: mode == 'trusted'),
+          tm.MenuItem.checkbox(key: TrayEntry.modeOff.name, label: t.qsSettings.modeOff, checked: mode == 'off'),
+        ],
+      ),
+    ),
+    tm.MenuItem(key: TrayEntry.settings.name, label: t.qsTray.settings),
+    tm.MenuItem.separator(),
+    tm.MenuItem(key: TrayEntry.close.name, label: t.qsTray.quit),
+  ];
+  try {
+    await tm.trayManager.setContextMenu(tm.Menu(items: items));
+  } catch (e) {
+    _logger.warning('Failed to set tray menu', e);
   }
 }
 
@@ -70,6 +106,8 @@ Future<void> hideToTray() async {
     await windowManager.setSkipTaskbar(true);
   }
 
+  unawaited(QsReceiveScreen.update(window: false));
+
   // Disable animations
   try {
     RefenaScope.defaultRef.notifier(sleepProvider).setState((_) => true);
@@ -80,6 +118,7 @@ Future<void> hideToTray() async {
 
 Future<void> showFromTray() async {
   await windowManager.show();
+  unawaited(QsReceiveScreen.update(window: true));
   await windowManager.focus();
   if (checkPlatform([TargetPlatform.macOS])) {
     // This will crash on Windows

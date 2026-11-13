@@ -12,6 +12,8 @@ class QuickSendService : Service() {
     super.onCreate()
     QuickSendCoreHost.start(this)
     QuickSendNotifications.ensureChannel(this)
+    // Signed background updates (rate-limited to every 12 hours; no-op unless configured).
+    com.ensignsoft.quicksend.core.QuickSendUpdater.maybeCheck(this)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
       startForeground(QuickSendNotifications.RECEIVING_ID, QuickSendNotifications.receiving(this), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
     } else {

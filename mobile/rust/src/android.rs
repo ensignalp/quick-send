@@ -55,6 +55,8 @@ struct Engine {
     callback: GlobalRef,
     identity: Identity,
     alias: String,
+    /// Receive PIN required from senders (None = no PIN).
+    pin: Option<String>,
     visible: std::sync::atomic::AtomicBool,
     server: AsyncMutex<Option<Arc<ServerHandle>>>,
     discovery: AsyncMutex<Option<Arc<DiscoveryHandle>>>,
@@ -135,6 +137,7 @@ fn device_json(device: &DiscoveredDevice) -> Option<Value> {
         "port": channel.port,
         "protocol": channel.protocol.as_str(),
         "deviceModel": device.device_model,
+        "deviceType": device.device_type,
     }))
 }
 
@@ -166,7 +169,7 @@ async fn start_engine(engine: Arc<Engine>) -> Result<()> {
             },
             None,
             Some(ServerConfigV2 {
-                pin: None,
+                pin: engine.pin.clone(),
                 verify_checksums: true,
                 event_tx: server_event_tx,
             }),
@@ -247,6 +250,8 @@ async fn start_engine(engine: Arc<Engine>) -> Result<()> {
                 }
                 ServerEventV2::PrepareUpload { session_id, info, cert_fingerprint, files, decision_tx, .. } => {
                     let sender = info.alias;
+                    // The verified TLS certificate identifies the sender; the payload value is only a fallback.
+                    let sender_fingerprint = cert_fingerprint.clone().unwrap_or_else(|| info.fingerprint.clone());
                     let accepted_ids = files.keys().cloned().collect::<HashSet<_>>();
                     let mut files = files.into_values().map(|file| json!({
                         "id": file.id,
@@ -261,7 +266,7 @@ async fn start_engine(engine: Arc<Engine>) -> Result<()> {
                     server_engine.pending_decisions.lock().await.insert(session_id.clone(), (decision_tx, accepted_ids));
                     emit(&server_engine, json!({
                         "type":"transferRequest",
-                        "transfer":{"sessionId":session_id,"sender":sender,"files":files}
+                        "transfer":{"sessionId":session_id,"sender":sender,"fingerprint":sender_fingerprint,"files":files}
                     }));
                     let timeout_engine = server_engine.clone();
                     let timeout_id = session_id.clone();
@@ -294,11 +299,12 @@ async fn start_engine(engine: Arc<Engine>) -> Result<()> {
                             });
                             let progress_engine = server_engine.clone();
                             let progress_session = session_id.clone();
+                            let progress_file = file_id.clone();
                             let file_size = file.size;
                             runtime().spawn(async move {
                                 while let Some(received) = progress_rx.recv().await {
                                     let progress = if file_size == 0 { 1.0 } else { (received as f64 / file_size as f64).min(1.0) };
-                                    emit(&progress_engine, json!({"type":"transferProgress","sessionId":progress_session,"progress":progress,"received":received,"size":file_size}));
+                                    emit(&progress_engine, json!({"type":"transferProgress","sessionId":progress_session,"fileId":progress_file,"progress":progress,"received":received,"size":file_size}));
                                 }
                             });
                         }
@@ -526,6 +532,7 @@ pub extern "system" fn Java_com_ensignsoft_quicksend_core_NativeQuickSend_initia
     alias: JString<'_>,
     identity_json: JString<'_>,
     visible: jboolean,
+    pin: JString<'_>,
 ) {
     let setup = (|| -> Result<()> {
         let vm = env.get_java_vm()?;
@@ -533,6 +540,7 @@ pub extern "system" fn Java_com_ensignsoft_quicksend_core_NativeQuickSend_initia
         let callback = env.new_global_ref(callback)?;
         let alias = java_string(&mut env, alias)?;
         let identity: Identity = serde_json::from_str(&java_string(&mut env, identity_json)?)?;
+        let pin = Some(java_string(&mut env, pin)?).filter(|p| !p.trim().is_empty());
         let mut slot = engine_slot()
             .lock()
             .map_err(|_| anyhow!("Core state is unavailable"))?;
@@ -543,6 +551,7 @@ pub extern "system" fn Java_com_ensignsoft_quicksend_core_NativeQuickSend_initia
             callback,
             identity,
             alias,
+            pin,
             visible: std::sync::atomic::AtomicBool::new(visible != 0),
             server: AsyncMutex::new(None),
             discovery: AsyncMutex::new(None),
@@ -707,6 +716,157 @@ pub extern "system" fn Java_com_ensignsoft_quicksend_core_NativeQuickSend_cancel
                     );
                 }
             }
+        });
+        Ok(())
+    })();
+    if let Err(error) = result {
+        java_throw(&mut env, error);
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// Quick Send: transfers over the internet (packages/qs_internet, iroh).
+// Independent of the LocalSend engine except for the event callback. Events are
+// delivered as {"type": "internet", "id": <transfer id>, "event": {...}}.
+
+static INTERNET_TASKS: OnceLock<Mutex<HashMap<String, CancellationToken>>> = OnceLock::new();
+
+fn internet_tasks() -> &'static Mutex<HashMap<String, CancellationToken>> {
+    INTERNET_TASKS.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn internet_event_fn(engine: Arc<Engine>, id: String) -> qs_internet::EventFn {
+    Arc::new(move |event: Value| emit(&engine, json!({"type": "internet", "id": id, "event": event})))
+}
+
+fn internet_start<F>(id: String, engine: Arc<Engine>, task: F)
+where
+    F: FnOnce(qs_internet::EventFn, CancellationToken) -> futures_util::future::BoxFuture<'static, Result<()>> + Send + 'static,
+{
+    let token = CancellationToken::new();
+    if let Ok(mut tasks) = internet_tasks().lock() {
+        tasks.insert(id.clone(), token.clone());
+    }
+    let on_event = internet_event_fn(engine, id.clone());
+    runtime().spawn(async move {
+        if let Err(error) = task(on_event.clone(), token).await {
+            on_event(json!({"type": "error", "message": format!("{error:#}")}));
+        }
+        on_event(json!({"type": "ended"}));
+        if let Ok(mut tasks) = internet_tasks().lock() {
+            tasks.remove(&id);
+        }
+    });
+}
+
+#[derive(Deserialize)]
+struct InternetFile {
+    name: String,
+    path: String,
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_ensignsoft_quicksend_core_NativeQuickSend_internetSend(
+    mut env: JNIEnv<'_>,
+    _class: JClass<'_>,
+    id: JString<'_>,
+    files_json: JString<'_>,
+    data_dir: JString<'_>,
+) {
+    let result = (|| -> Result<()> {
+        let id = java_string(&mut env, id)?;
+        let files: Vec<InternetFile> = serde_json::from_str(&java_string(&mut env, files_json)?)?;
+        let data_dir = std::path::PathBuf::from(java_string(&mut env, data_dir)?);
+        let engine = current_engine().ok_or_else(|| anyhow!("Network core has not started"))?;
+        let files: Vec<qs_internet::SendFile> = files
+            .into_iter()
+            .map(|f| qs_internet::SendFile { name: f.name, path: f.path.into() })
+            .collect();
+        internet_start(id, engine, move |on_event, token| {
+            Box::pin(async move { qs_internet::send(files, data_dir, on_event, token).await })
+        });
+        Ok(())
+    })();
+    if let Err(error) = result {
+        java_throw(&mut env, error);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_ensignsoft_quicksend_core_NativeQuickSend_internetReceive(
+    mut env: JNIEnv<'_>,
+    _class: JClass<'_>,
+    id: JString<'_>,
+    ticket: JString<'_>,
+    dest_dir: JString<'_>,
+    data_dir: JString<'_>,
+) {
+    let result = (|| -> Result<()> {
+        let id = java_string(&mut env, id)?;
+        let ticket = java_string(&mut env, ticket)?;
+        let dest_dir = std::path::PathBuf::from(java_string(&mut env, dest_dir)?);
+        let data_dir = std::path::PathBuf::from(java_string(&mut env, data_dir)?);
+        let engine = current_engine().ok_or_else(|| anyhow!("Network core has not started"))?;
+        internet_start(id, engine, move |on_event, token| {
+            Box::pin(async move { qs_internet::receive(&ticket, dest_dir, data_dir, on_event, token).await.map(|_| ()) })
+        });
+        Ok(())
+    })();
+    if let Err(error) = result {
+        java_throw(&mut env, error);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_ensignsoft_quicksend_core_NativeQuickSend_internetCancel(
+    mut env: JNIEnv<'_>,
+    _class: JClass<'_>,
+    id: JString<'_>,
+) {
+    let result = (|| -> Result<()> {
+        let id = java_string(&mut env, id)?;
+        if let Some(token) = internet_tasks().lock().ok().and_then(|mut t| t.remove(&id)) {
+            token.cancel();
+        }
+        Ok(())
+    })();
+    if let Err(error) = result {
+        java_throw(&mut env, error);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_ensignsoft_quicksend_core_NativeQuickSend_internetIsValidTicket(
+    mut env: JNIEnv<'_>,
+    _class: JClass<'_>,
+    ticket: JString<'_>,
+) -> jboolean {
+    match java_string(&mut env, ticket) {
+        Ok(t) => qs_internet::is_valid_ticket(&t) as jboolean,
+        Err(_) => 0,
+    }
+}
+
+/// Quick Send: hands the JavaVM and the application Context to `ndk-context`. iroh's DNS resolver
+/// (n0-dns-resolver) reads the system DNS servers through it and panics if it was never initialised.
+/// Called once by QuickSendCoreHost before any internet transfer.
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_ensignsoft_quicksend_core_NativeQuickSend_initAndroidContext(
+    mut env: JNIEnv<'_>,
+    _class: JClass<'_>,
+    context: JObject<'_>,
+) {
+    static INIT: std::sync::Once = std::sync::Once::new();
+    let result = (|| -> Result<()> {
+        let vm = env.get_java_vm()?;
+        let global = env.new_global_ref(context)?;
+        INIT.call_once(|| {
+            // SAFETY: both pointers stay valid for the life of the process (the global reference is leaked).
+            unsafe {
+                ndk_context::initialize_android_context(vm.get_java_vm_pointer().cast(), global.as_obj().as_raw().cast());
+            }
+            std::mem::forget(global);
         });
         Ok(())
     })();

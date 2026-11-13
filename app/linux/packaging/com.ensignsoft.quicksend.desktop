@@ -10,3 +10,11 @@ Categories=Network;FileTransfer;
 StartupNotify=true
 StartupWMClass=com.ensignsoft.quicksend
 Keywords=files;transfer;sharing;LAN;
+Name[tr]=Quick Send
+Comment[tr]=Yerel ağındaki cihazlara dosya gönder
+Actions=open-window;
+
+[Desktop Action open-window]
+Name=Open window
+Name[tr]=Pencereyi aç
+Exec=quicksend --show

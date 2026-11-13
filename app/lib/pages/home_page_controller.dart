@@ -36,7 +36,8 @@ class ChangeTabAction extends ReduxAction<HomePageController, HomePageVm> {
 
   @override
   HomePageVm reduce() {
-    state.controller.jumpToPage(tab.index);
+    // Quick Send's share home has no PageView; only jump when one is attached.
+    if (state.controller.hasClients) state.controller.jumpToPage(tab.index);
     return HomePageVm(
       controller: state.controller,
       currentTab: tab,

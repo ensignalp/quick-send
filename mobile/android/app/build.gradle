@@ -22,6 +22,11 @@ react {
     //   skip the bundling of the JS bundle and the assets. Default is "debug", "debugOptimized".
     //   If you add flavors like lite, prod, etc. you'll have to list your debuggableVariants.
     // debuggableVariants = ["liteDebug", "liteDebugOptimized", "prodDebug", "prodDebugOptimized"]
+    // Quick Send: `-PqsEmbedBundle` embeds the JS bundle in debug builds too, giving a
+    // self-contained test APK that runs without Metro (no release keystore needed).
+    if (project.hasProperty("qsEmbedBundle")) {
+        debuggableVariants = []
+    }
 
     /* Bundling */
     //   A list containing the node command and its flags. Default is just 'node'.
@@ -55,7 +60,8 @@ react {
     //
     // Added by install-expo-modules
     entryFile = file(["node", "-e", "require('expo/scripts/resolveAppEntry')", rootDir.getAbsoluteFile().getParentFile().getAbsolutePath(), "android", "absolute"].execute(null, rootDir).text.trim())
-    cliFile = new File(["node", "--print", "require.resolve('@expo/cli')"].execute(null, rootDir).text.trim())
+    // Resolve the CLI next to the `expo` package so a stray parent node_modules cannot shadow it.
+    cliFile = new File(["node", "--print", "require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })"].execute(null, rootDir).text.trim())
     bundleCommand = "export:embed"
 }
 
@@ -87,11 +93,17 @@ android {
         applicationId "com.ensignsoft.quicksend"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode((System.getenv("QS_VERSION_CODE") ?: "1").toInteger())
-        versionName "0.1.0"
-        // owner/repo used only by the user-triggered update check; empty disables it.
+        versionName "1.0.0"
+        // Quick Send: one scheme for local and CI builds, derived from versionName: X.Y.Z -> X*10000 + Y*100 + Z
+        // (1.0.0 -> 10000). Y and Z must stay below 100. QS_VERSION_CODE can still override it.
+        def qsVersionParts = versionName.tokenize('.').collect { it.toInteger() }
+        versionCode((System.getenv("QS_VERSION_CODE") ?: (qsVersionParts[0] * 10000 + qsVersionParts[1] * 100 + qsVersionParts[2]).toString()).toInteger())
+        // owner/repo for the update check and background updates; empty disables both.
         def releasesRepo = (System.getenv("QS_RELEASES_REPO") ?: "").replaceAll(/[^A-Za-z0-9_.\/-]/, "")
         buildConfigField "String", "RELEASES_REPO", "\"${releasesRepo}\""
+        // Quick Send: public key (base64 SPKI, ECDSA P-256) that signs SHA256SUMS.txt of releases. Empty = no auto-install.
+        def updatePublicKey = (System.getenv("QS_UPDATE_PUBLIC_KEY") ?: "").replaceAll(/[^A-Za-z0-9+\/=]/, "")
+        buildConfigField "String", "UPDATE_PUBLIC_KEY", "\"${updatePublicKey}\""
     }
     buildFeatures {
         buildConfig true

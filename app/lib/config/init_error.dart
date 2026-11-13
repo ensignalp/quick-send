@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:localsend_app/config/theme.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_app/util/native/tray_helper.dart';
 import 'package:logging/logging.dart';
@@ -65,6 +66,7 @@ class _ErrorAppState extends State<_ErrorApp> {
     return MaterialApp(
       title: 'Quick Send: Error',
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(fontFamily: qsFontFamily),
       home: Scaffold(
         body: TextFormField(
           controller: _controller,

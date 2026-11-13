@@ -1,0 +1,7 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Quick Send mark (support/brand/quick-send-mark.svg) -->
+    <group android:scaleX="0.07396" android:scaleY="0.07396" android:translateX="12.765" android:translateY="13.320">
+        <path android:fillColor="#FF000000" android:fillType="evenOdd" android:pathData="M334,212H828V705H645V888H465A178,178 0,0 1,339 584L526,397H334Z M645,535V705H475Z" />
+    </group>
+</vector>

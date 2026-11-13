@@ -22,6 +22,7 @@ import com.ensignsoft.quicksend.core.NativeQuickSend
 import com.ensignsoft.quicksend.core.QuickSendCoreHost
 import com.ensignsoft.quicksend.core.QuickSendEventBus
 import com.ensignsoft.quicksend.core.QuickSendFiles
+import com.ensignsoft.quicksend.core.QuickSendMedia
 import com.ensignsoft.quicksend.core.QuickSendShare
 import org.json.JSONArray
 import org.json.JSONObject
@@ -94,7 +95,68 @@ class QuickSendModule(private val context: ReactApplicationContext) : ReactConte
     promise.resolve(Arguments.createMap().apply {
       putString("version", BuildConfig.VERSION_NAME)
       putString("releasesRepo", BuildConfig.RELEASES_REPO)
+      putString("alias", QuickSendCoreHost.alias(context))
     })
+  }
+
+  /** UI preferences (language, theme, trusted devices, history…) as one JSON document. */
+  @ReactMethod fun getSettings(promise: Promise) {
+    promise.resolve(context.getSharedPreferences(UI_PREFS, android.content.Context.MODE_PRIVATE).getString("state", null))
+  }
+
+  @ReactMethod fun setSettings(json: String, promise: Promise) {
+    context.getSharedPreferences(UI_PREFS, android.content.Context.MODE_PRIVATE).edit().putString("state", json).apply()
+    promise.resolve(true)
+  }
+
+  /** Device name and receive PIN used by the core. Empty strings reset them. Applied after [restartApp]. */
+  @ReactMethod fun setCoreConfig(alias: String, pin: String, promise: Promise) {
+    QuickSendCoreHost.setCoreConfig(context, alias, pin)
+    promise.resolve(true)
+  }
+
+  @ReactMethod fun getCoreConfig(promise: Promise) {
+    promise.resolve(Arguments.createMap().apply {
+      putString("alias", QuickSendCoreHost.alias(context))
+      putString("pin", QuickSendCoreHost.pin(context))
+    })
+  }
+
+  /** Restarts the process so the core starts again with the new name/PIN. */
+  @ReactMethod fun restartApp() {
+    val intent = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+    context.startActivity(intent)
+    Runtime.getRuntime().exit(0)
+  }
+
+  /** Local IPv4 addresses and the LocalSend port, for the info sheet. */
+  @ReactMethod fun getNetworkInfo(promise: Promise) {
+    val addresses = Arguments.createArray()
+    runCatching {
+      java.net.NetworkInterface.getNetworkInterfaces()?.toList().orEmpty()
+        .filter { it.isUp && !it.isLoopback }
+        .flatMap { it.inetAddresses.toList() }
+        .filterIsInstance<java.net.Inet4Address>()
+        .map { it.hostAddress }
+        .distinct()
+        .forEach { addresses.pushString(it) }
+    }
+    promise.resolve(Arguments.createMap().apply {
+      putArray("addresses", addresses)
+      putInt("port", 53317)
+    })
+  }
+
+  /** Opens the system Downloads app, where received files are stored (Downloads/Quick Send). */
+  @ReactMethod fun openDownloads(promise: Promise) {
+    try {
+      val intent = Intent(android.app.DownloadManager.ACTION_VIEW_DOWNLOADS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      context.startActivity(intent)
+      promise.resolve(true)
+    } catch (error: Exception) {
+      promise.reject("OPEN_FAILED", error)
+    }
   }
 
   @ReactMethod fun getLanguage(promise: Promise) {
@@ -103,6 +165,67 @@ class QuickSendModule(private val context: ReactApplicationContext) : ReactConte
 
   @ReactMethod fun getVisibility(promise: Promise) {
     promise.resolve(if (QuickSendCoreHost.visibility(context)) "everyone" else "off")
+  }
+
+  /** Internet transfer (iroh): shares the given files; resolves to the transfer id. Events: type "internet". */
+  @ReactMethod fun internetSend(files: ReadableArray, promise: Promise) {
+    val id = UUID.randomUUID().toString()
+    val list = (0 until files.size()).mapNotNull { i ->
+      val f = files.getMap(i) ?: return@mapNotNull null
+      val uri = f.getString("uri") ?: return@mapNotNull null
+      android.net.Uri.parse(uri) to (f.getString("name") ?: "file")
+    }
+    Thread({
+      runCatching { com.ensignsoft.quicksend.core.QuickSendInternet.send(context, id, list) }
+        .onSuccess { promise.resolve(id) }
+        .onFailure { promise.reject("internet_send", it.message, it) }
+    }, "quick-send-internet").start()
+  }
+
+  @ReactMethod fun internetReceive(ticket: String, promise: Promise) {
+    if (!com.ensignsoft.quicksend.core.NativeQuickSend.internetIsValidTicket(ticket)) {
+      promise.reject("invalid_code", "invalid code")
+      return
+    }
+    val id = UUID.randomUUID().toString()
+    runCatching { com.ensignsoft.quicksend.core.QuickSendInternet.receive(context, id, ticket) }
+      .onSuccess { promise.resolve(id) }
+      .onFailure { promise.reject("internet_receive", it.message, it) }
+  }
+
+  @ReactMethod fun internetCancel(id: String, promise: Promise) {
+    com.ensignsoft.quicksend.core.QuickSendInternet.cancel(id)
+    promise.resolve(true)
+  }
+
+  @ReactMethod fun internetIsValidCode(ticket: String, promise: Promise) {
+    promise.resolve(runCatching { com.ensignsoft.quicksend.core.NativeQuickSend.internetIsValidTicket(ticket) }.getOrDefault(false))
+  }
+
+  /** Background receiving: true when Android battery optimisation does not restrict Quick Send. */
+  @ReactMethod fun isBatteryUnrestricted(promise: Promise) {
+    val power = context.getSystemService(android.os.PowerManager::class.java)
+    promise.resolve(power?.isIgnoringBatteryOptimizations(context.packageName) == true)
+  }
+
+  /** Opens the system dialog that exempts Quick Send from battery optimisation (the user decides). */
+  @ReactMethod fun requestBatteryUnrestricted(promise: Promise) {
+    val intent = Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+      .setData(android.net.Uri.parse("package:${context.packageName}"))
+      .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    promise.resolve(runCatching { context.startActivity(intent) }.isSuccess)
+  }
+
+  @ReactMethod fun getUpdateSupport(promise: Promise) {
+    promise.resolve(Arguments.createMap().apply {
+      putBoolean("supported", com.ensignsoft.quicksend.core.QuickSendUpdater.supported())
+      putBoolean("canInstall", com.ensignsoft.quicksend.core.QuickSendUpdater.canInstall(context))
+    })
+  }
+
+  /** Runs a background update check now; resolves to ready / upToDate / rejected / failed / notConfigured / busy. */
+  @ReactMethod fun checkUpdateNow(promise: Promise) {
+    Thread({ promise.resolve(com.ensignsoft.quicksend.core.QuickSendUpdater.run(context)) }, "quick-send-update").start()
   }
 
   @ReactMethod fun isReceiverEnabled(promise: Promise) {
@@ -115,6 +238,97 @@ class QuickSendModule(private val context: ReactApplicationContext) : ReactConte
   }
 
   @ReactMethod fun pickFiles(promise: Promise) {
+    launchPicker(openDocumentIntent("*/*"), FILE_PICK_REQUEST, promise)
+  }
+
+  /** System document picker limited to document types (the picker's "Documents" fallback). */
+  @ReactMethod fun pickDocuments(promise: Promise) {
+    launchPicker(openDocumentIntent("*/*").putExtra(Intent.EXTRA_MIME_TYPES, QuickSendMedia.documentMimeTypes), FILE_PICK_REQUEST, promise)
+  }
+
+  /** Lets a specific app (from [getContentApps]) provide the files. */
+  @ReactMethod fun pickWithApp(packageName: String, activityName: String, promise: Promise) {
+    val intent = Intent(Intent.ACTION_GET_CONTENT)
+      .setType("*/*")
+      .addCategory(Intent.CATEGORY_OPENABLE)
+      .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+      .setClassName(packageName, activityName)
+    launchPicker(intent, FILE_PICK_REQUEST, promise)
+  }
+
+  /** Picks a profile photo; resolves with a `file://` URI of the cropped copy, or null when cancelled. */
+  @ReactMethod fun pickAvatar(promise: Promise) {
+    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("image/*")
+    launchPicker(intent, AVATAR_REQUEST, promise)
+  }
+
+  @ReactMethod fun clearAvatar(promise: Promise) {
+    QuickSendMedia.clearAvatar(context)
+    promise.resolve(true)
+  }
+
+  @ReactMethod fun hasMediaPermission(promise: Promise) {
+    promise.resolve(mediaPermissions().all { context.checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED } || hasPartialMediaAccess())
+  }
+
+  @ReactMethod fun requestMediaPermission(promise: Promise) {
+    val missing = mediaPermissions().filter { context.checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
+    if (missing.isEmpty() || hasPartialMediaAccess() && Build.VERSION.SDK_INT < 34) {
+      promise.resolve(true)
+      return
+    }
+    val activity = context.currentActivity as? PermissionAwareActivity
+    if (activity == null) {
+      promise.resolve(false)
+      return
+    }
+    val request = if (Build.VERSION.SDK_INT >= 34) missing + "android.permission.READ_MEDIA_VISUAL_USER_SELECTED" else missing
+    activity.requestPermissions(request.toTypedArray(), MEDIA_PERMISSION_REQUEST, PermissionListener { code, _, _ ->
+      if (code != MEDIA_PERMISSION_REQUEST) return@PermissionListener false
+      promise.resolve(mediaPermissions().all { context.checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED } || hasPartialMediaAccess())
+      true
+    })
+  }
+
+  /** Lists `images`, `videos` or `documents` from the media library (newest first). */
+  @ReactMethod fun queryMedia(kind: String, limit: Int, offset: Int, promise: Promise) {
+    Thread {
+      runCatching { QuickSendMedia.query(context, kind, limit, offset) }
+        .onSuccess { promise.resolve(jsonArrayToWritable(it)) }
+        .onFailure { promise.reject("MEDIA_QUERY_FAILED", it) }
+    }.start()
+  }
+
+  @ReactMethod fun getThumbnail(uri: String, size: Int, promise: Promise) {
+    thumbnailExecutor.execute {
+      runCatching { QuickSendMedia.thumbnail(context, android.net.Uri.parse(uri), size) }
+        .onSuccess { promise.resolve(it) }
+        .onFailure { promise.resolve(null) }
+    }
+  }
+
+  @ReactMethod fun getContentApps(promise: Promise) {
+    Thread {
+      runCatching { QuickSendMedia.contentApps(context) }
+        .onSuccess { promise.resolve(jsonArrayToWritable(it)) }
+        .onFailure { promise.reject("APPS_FAILED", it) }
+    }.start()
+  }
+
+  private fun mediaPermissions(): List<String> =
+    if (Build.VERSION.SDK_INT >= 33) listOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
+    else listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+
+  private fun hasPartialMediaAccess(): Boolean =
+    Build.VERSION.SDK_INT >= 34 && context.checkSelfPermission("android.permission.READ_MEDIA_VISUAL_USER_SELECTED") == PackageManager.PERMISSION_GRANTED
+
+  private fun openDocumentIntent(type: String) = Intent(Intent.ACTION_OPEN_DOCUMENT)
+    .addCategory(Intent.CATEGORY_OPENABLE)
+    .setType(type)
+    .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+
+  private fun launchPicker(intent: Intent, requestCode: Int, promise: Promise) {
     val activity = context.currentActivity
     if (activity == null) {
       promise.reject("NO_ACTIVITY", "The file picker is not available right now")
@@ -125,13 +339,8 @@ class QuickSendModule(private val context: ReactApplicationContext) : ReactConte
       return
     }
     filePromise = promise
-    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-      .addCategory(Intent.CATEGORY_OPENABLE)
-      .setType("*/*")
-      .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-      .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
     try {
-      activity.startActivityForResult(intent, FILE_PICK_REQUEST)
+      activity.startActivityForResult(intent, requestCode)
     } catch (error: Exception) {
       filePromise = null
       promise.reject("PICKER_FAILED", error)
@@ -243,9 +452,22 @@ class QuickSendModule(private val context: ReactApplicationContext) : ReactConte
   }
 
   override fun onActivityResult(activity: Activity, requestCode: Int, resultCode: Int, data: Intent?) {
-    if (requestCode != FILE_PICK_REQUEST) return
+    if (requestCode != FILE_PICK_REQUEST && requestCode != AVATAR_REQUEST) return
     val promise = filePromise ?: return
     filePromise = null
+    if (requestCode == AVATAR_REQUEST) {
+      val uri = data?.data
+      if (resultCode != Activity.RESULT_OK || uri == null) {
+        promise.resolve(null)
+        return
+      }
+      Thread {
+        runCatching { QuickSendMedia.saveAvatar(context, uri) }
+          .onSuccess { promise.resolve(it) }
+          .onFailure { promise.reject("AVATAR_FAILED", it) }
+      }.start()
+      return
+    }
     if (resultCode != Activity.RESULT_OK || data == null) {
       promise.resolve(Arguments.createArray())
       return
@@ -254,7 +476,7 @@ class QuickSendModule(private val context: ReactApplicationContext) : ReactConte
       val list = mutableListOf<android.net.Uri>()
       data.clipData?.let { clip -> for (index in 0 until clip.itemCount) list.add(clip.getItemAt(index).uri) }
       if (list.isEmpty()) data.data?.let(list::add)
-      val files = list.distinct().mapIndexed { index, uri -> QuickSendFiles.describe(context, uri, data.type, "picked-$index") }
+      val files = list.distinct().mapIndexed { index, uri -> QuickSendFiles.describe(context, uri, data.type, "picked-${UUID.randomUUID()}-$index") }
       promise.resolve(fileListToWritable(files))
     }.onFailure { promise.reject("PICKER_FAILED", it) }
   }
@@ -317,6 +539,10 @@ class QuickSendModule(private val context: ReactApplicationContext) : ReactConte
     private const val EVENT_NAME = "QuickSendEvent"
     private const val PERMISSION_REQUEST = 5421
     private const val FILE_PICK_REQUEST = 5422
+    private const val UI_PREFS = "quick_send_ui"
+    private const val AVATAR_REQUEST = 5423
+    private const val MEDIA_PERMISSION_REQUEST = 5424
+    private val thumbnailExecutor = java.util.concurrent.Executors.newFixedThreadPool(3)
   }
 }
 

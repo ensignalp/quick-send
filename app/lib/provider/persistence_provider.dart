@@ -14,6 +14,7 @@ import 'package:localsend_app/provider/window_dimensions_provider.dart';
 import 'package:localsend_app/util/alias_generator.dart';
 import 'package:localsend_app/util/native/autostart_helper.dart';
 import 'package:localsend_app/util/native/context_menu_helper.dart';
+import 'package:localsend_app/util/native/device_info_helper.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_app/util/security_helper.dart';
 import 'package:localsend_app/util/shared_preferences/shared_preferences_file.dart';
@@ -61,8 +62,8 @@ const _favorites = 'ls_favorites';
 // App Window Offset and Size info
 const _windowOffsetX = 'ls_window_offset_x';
 const _windowOffsetY = 'ls_window_offset_y';
-const _windowWidth = 'ls_window_width';
-const _windowHeight = 'ls_window_height';
+const _windowWidth = 'qs_window_width'; // Quick Send: new keys so the 900×500 default replaces sizes saved by older builds.
+const _windowHeight = 'qs_window_height';
 const _saveWindowPlacement = 'ls_save_window_placement';
 const _alwaysOnTop = 'ls_always_on_top';
 
@@ -85,6 +86,11 @@ const _quickSave = 'ls_quick_save'; // a QuickSaveMode; was a bool until storage
 const _receivePin = 'ls_receive_pin';
 const _autoFinish = 'ls_auto_finish';
 const _minimizeToTray = 'ls_minimize_to_tray';
+const _trustedOnly = 'qs_trusted_only'; // Quick Send (legacy): accept requests only from trusted (favorite) devices
+const _shareMode = 'qs_share_mode'; // Quick Send: who can share when the Receive screen is closed: off | trusted | everyone
+const _autoStartOffered = 'qs_autostart_offered'; // Quick Send: "start at login?" was asked once (Linux)
+const _autoUpdate = 'qs_auto_update'; // Quick Send: background updates (Linux AppImage), on by default
+const _contextMenuOffered = 'qs_context_menu_offered'; // Quick Send: file manager integration was set up once
 const _https = 'ls_https';
 const _sendMode = 'ls_send_mode';
 const _enableAnimations = 'ls_enable_animations';
@@ -170,7 +176,9 @@ class PersistenceService {
     }
 
     if (prefs.getString(_aliasKey) == null) {
-      await prefs.setString(_aliasKey, generateRandomAlias());
+      // Quick Send: start with the system's device name (like the Android app), else a random alias.
+      final systemName = await getDeviceName().catchError((_) => null);
+      await prefs.setString(_aliasKey, systemName?.trim().isNotEmpty == true ? systemName!.trim() : generateRandomAlias());
     }
 
     if (prefs.getString(_securityContext) == null) {
@@ -486,11 +494,42 @@ class PersistenceService {
   }
 
   bool isMinimizeToTray() {
-    return _prefs.getBool(_minimizeToTray) ?? false;
+    // Quick Send lives in the tray on Linux, so closing the window hides it by default.
+    return _prefs.getBool(_minimizeToTray) ?? Platform.isLinux;
   }
 
   Future<void> setMinimizeToTray(bool minimizeToTray) async {
     await _prefs.setBool(_minimizeToTray, minimizeToTray);
+  }
+
+  /// Quick Send: when true, file requests from devices that are not trusted (favorites) are declined.
+  bool isTrustedOnly() {
+    return getQsShareMode() == 'trusted';
+  }
+
+  /// Quick Send: `off`, `trusted` or `everyone` (default `trusted`).
+  String getQsShareMode() {
+    final mode = _prefs.getString(_shareMode);
+    if (mode == 'off' || mode == 'trusted' || mode == 'everyone') return mode!;
+    return (_prefs.getBool(_trustedOnly) ?? true) ? 'trusted' : 'everyone';
+  }
+
+  Future<void> setQsShareMode(String mode) async {
+    await _prefs.setString(_shareMode, mode);
+  }
+
+  bool isQsAutoUpdate() => _prefs.getBool(_autoUpdate) ?? true;
+
+  bool isQsAutoStartOffered() => _prefs.getBool(_autoStartOffered) ?? false;
+
+  Future<void> setQsAutoStartOffered() async => _prefs.setBool(_autoStartOffered, true);
+
+  Future<void> setQsAutoUpdate(bool value) async => _prefs.setBool(_autoUpdate, value);
+
+  bool isQsContextMenuOffered() => _prefs.getBool(_contextMenuOffered) ?? false;
+
+  Future<void> setQsContextMenuOffered() async {
+    await _prefs.setBool(_contextMenuOffered, true);
   }
 
   bool isHttps() {

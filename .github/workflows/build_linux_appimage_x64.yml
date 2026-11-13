@@ -58,7 +58,10 @@ jobs:
 
       - name: Compile linux
         working-directory: app
-        run: flutter build linux --release --dart-define=QS_RELEASES_REPO=${{ github.repository }}
+        run: flutter build linux --release --dart-define=QS_RELEASES_REPO=${{ github.repository }} --dart-define=QS_UPDATE_PUBLIC_KEY=${{ vars.QS_UPDATE_PUBLIC_KEY }}
+
+      - name: Build the internet transfer helper (iroh)
+        run: sh support/build/linux/bundle-internet-helper.sh
 
       - name: Copy compiled linux files
         run: |

@@ -2,25 +2,23 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:localsend_app/config/theme.dart';
 import 'package:localsend_app/gen/strings.g.dart';
-import 'package:localsend_app/model/persistence/color_mode.dart';
 import 'package:localsend_app/pages/receive_options_page.dart';
 import 'package:localsend_app/pages/verify_page.dart';
 import 'package:localsend_app/pages/web_share_page.dart';
 import 'package:localsend_app/provider/favorites_provider.dart';
 import 'package:localsend_app/provider/selection/selected_receiving_files_provider.dart';
-import 'package:localsend_app/provider/settings_provider.dart';
+import 'package:localsend_app/quick_send/qs_style.dart';
 import 'package:localsend_app/util/device_type_ext.dart';
 import 'package:localsend_app/util/favorites.dart';
+import 'package:localsend_app/util/file_type_ext.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_app/util/native/taskbar_helper.dart';
 import 'package:localsend_app/util/ui/snackbar.dart';
-import 'package:localsend_app/widget/device_bage.dart';
-import 'package:localsend_app/widget/responsive_list_view.dart';
 import 'package:localsend_isolates/model/device.dart';
 import 'package:localsend_isolates/model/dto/file_dto.dart';
 import 'package:localsend_isolates/model/session_status.dart';
+import 'package:localsend_isolates/util/file_size_helper.dart';
 import 'package:refena_flutter/addons.dart';
 import 'package:refena_flutter/refena_flutter.dart';
 import 'package:routerino/routerino.dart';
@@ -95,186 +93,277 @@ class _ReceivePageState extends State<ReceivePage> with Refena {
             }
           },
           canPop: true,
-          child: Scaffold(
-            body: SafeArea(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: ResponsiveListView.defaultMaxWidth),
-                  child: Builder(
-                    builder: (context) {
-                      final height = MediaQuery.of(context).size.height;
-                      final smallUi = vm.message != null && height < 600;
-                      return Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: smallUi ? 20 : 30),
+          child: Builder(
+            builder: (context) {
+              final p = QsPalette(context);
+              final alias = senderFavoriteEntry?.alias ?? vm.sender.alias;
+              final height = MediaQuery.of(context).size.height;
+              final smallUi = height < 600;
+              return Scaffold(
+                backgroundColor: p.bg,
+                body: SafeArea(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 520),
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(20, smallUi ? 16 : 28, 20, 20),
                         child: Column(
                           children: [
                             Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Column(
-                                    children: [
-                                      if (vm.showSenderInfo && !smallUi)
-                                        Padding(
-                                          padding: const EdgeInsets.only(bottom: 10),
-                                          child: Icon(vm.sender.deviceType.icon, size: 64),
-                                        ),
-                                      Builder(
-                                        builder: (context) {
-                                          final alias = senderFavoriteEntry?.alias ?? vm.sender.alias;
-                                          if (alias.isEmpty) {
-                                            return Text('', style: TextStyle(fontSize: smallUi ? 32 : 48));
-                                          }
-                                          return FittedBox(
-                                            child: Text(
-                                              alias,
-                                              style: TextStyle(fontSize: smallUi ? 32 : 48),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          );
-                                        },
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  children: [
+                                    if (vm.showSenderInfo)
+                                      Container(
+                                        width: smallUi ? 64 : 84,
+                                        height: smallUi ? 64 : 84,
+                                        decoration: BoxDecoration(color: p.accentSoft, shape: BoxShape.circle),
+                                        child: Icon(vm.sender.deviceType.icon, size: smallUi ? 30 : 40, color: p.accent),
                                       ),
-                                      if (vm.showSenderInfo && vm.sender.deviceModel != null) ...[
-                                        const SizedBox(height: 10),
-                                        Center(
-                                          child: DeviceBadge(
-                                            backgroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
-                                            foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
-                                            label: vm.sender.deviceModel!,
-                                          ),
-                                        ),
-                                      ],
+                                    const SizedBox(height: 14),
+                                    Text(
+                                      alias,
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: smallUi ? 22 : 26, fontWeight: FontWeight.w700, color: p.text),
+                                    ),
+                                    if (vm.showSenderInfo && vm.sender.deviceModel != null) ...[
+                                      const SizedBox(height: 8),
+                                      _Chip(label: vm.sender.deviceModel!),
                                     ],
-                                  ),
-
-                                  Column(
-                                    children: [
-                                      Text(
-                                        vm.message != null
-                                            ? (vm.isLink ? t.receivePage.subTitleLink : t.receivePage.subTitleMessage)
-                                            : t.receivePage.subTitle(n: vm.files.length),
-                                        style: smallUi ? null : Theme.of(context).textTheme.titleLarge,
-                                        textAlign: TextAlign.center,
+                                    const SizedBox(height: 14),
+                                    Text(
+                                      vm.message != null
+                                          ? (vm.isLink ? t.receivePage.subTitleLink : t.receivePage.subTitleMessage)
+                                          : t.receivePage.subTitle(n: vm.files.length),
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(fontSize: 15, color: p.sub, height: 1.4),
+                                    ),
+                                    const SizedBox(height: 18),
+                                    if (vm.message == null) _FileSummary(files: vm.files),
+                                    if (vm.showSenderInfo && vm.message == null) ...[
+                                      const SizedBox(height: 14),
+                                      Wrap(
+                                        alignment: WrapAlignment.center,
+                                        spacing: 10,
+                                        runSpacing: 10,
+                                        children: [
+                                          _QsButton(
+                                            icon: Icons.verified_user_outlined,
+                                            label: t.verifyPage.title,
+                                            onPressed: !vm.sender.https
+                                                ? null
+                                                : () async => await context.push(
+                                                    () => VerifyPage(
+                                                      fingerprint: CombinedFingerprint.load(context, vm.sender.fingerprint),
+                                                    ),
+                                                  ),
+                                          ),
+                                          _QsButton(
+                                            icon: Icons.tune,
+                                            label: t.receiveOptionsPage.title,
+                                            onPressed: () async {
+                                              await context.push(() => ReceiveOptionsPage(vm));
+                                            },
+                                          ),
+                                        ],
                                       ),
-                                      if (vm.showSenderInfo && vm.message == null)
-                                        Padding(
-                                          padding: const EdgeInsets.only(top: 8),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              TextButton.icon(
-                                                onPressed: !vm.sender.https
-                                                    ? null
-                                                    : () async => await context.push(
-                                                        () => VerifyPage(
-                                                          fingerprint: CombinedFingerprint.load(context, vm.sender.fingerprint),
-                                                        ),
-                                                      ),
-                                                style: TextButton.styleFrom(
-                                                  foregroundColor: Theme.of(context).colorScheme.onSurface,
-                                                ),
-                                                icon: Icon(Icons.verified_user),
-                                                label: Text(t.verifyPage.title),
-                                              ),
-                                              TextButton.icon(
-                                                style: TextButton.styleFrom(
-                                                  foregroundColor: Theme.of(context).colorScheme.onSurface,
-                                                ),
-                                                onPressed: () async {
-                                                  await context.push(() => ReceiveOptionsPage(vm));
-                                                },
-                                                icon: const Icon(Icons.settings),
-                                                label: Text(t.receiveOptionsPage.title),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      if (vm.message != null)
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                                          children: [
-                                            Padding(
-                                              padding: const EdgeInsets.only(top: 20),
-                                              child: SizedBox(
-                                                height: 100,
-                                                child: Card(
-                                                  child: SingleChildScrollView(
-                                                    child: Padding(
-                                                      padding: const EdgeInsets.all(10),
-                                                      child: SelectableText(
-                                                        vm.message!,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 10),
-                                            Wrap(
-                                              alignment: WrapAlignment.center,
-                                              spacing: 20,
-                                              runSpacing: 10,
-                                              children: [
-                                                if (vm.showSenderInfo)
-                                                  ElevatedButton.icon(
-                                                    onPressed: () async => await context.push(
-                                                      () => VerifyPage(
-                                                        fingerprint: CombinedFingerprint.load(context, vm.sender.fingerprint),
-                                                      ),
-                                                    ),
-                                                    icon: Icon(Icons.verified_user),
-                                                    label: Text(t.verifyPage.title),
-                                                  ),
-                                                ElevatedButton.icon(
-                                                  onPressed: () {
-                                                    unawaited(
-                                                      Clipboard.setData(ClipboardData(text: vm.message!)),
-                                                    );
-                                                    if (checkPlatformIsDesktop()) {
-                                                      context.showSnackBar(t.general.copiedToClipboard);
-                                                    }
-                                                    vm.onAccept();
-                                                    context.global.dispatch(NavigateAction.popUntil<WebSharePage>());
-                                                  },
-                                                  icon: Icon(Icons.copy),
-                                                  label: Text(t.general.copy),
-                                                ),
-                                                if (vm.isLink)
-                                                  ElevatedButton.icon(
-                                                    style: ElevatedButton.styleFrom(
-                                                      backgroundColor: Theme.of(context).colorScheme.primary,
-                                                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                                                    ),
-                                                    onPressed: () {
-                                                      // ignore: discarded_futures
-                                                      launchUrl(Uri.parse(vm.message!), mode: LaunchMode.externalApplication);
-                                                      vm.onAccept();
-                                                      context.global.dispatch(NavigateAction.popUntil<WebSharePage>());
-                                                    },
-                                                    icon: Icon(Icons.open_in_new),
-                                                    label: Text(t.general.open),
-                                                  ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
                                     ],
-                                  ),
-                                ],
+                                    if (vm.message != null) ...[
+                                      Container(
+                                        constraints: const BoxConstraints(maxHeight: 160),
+                                        width: double.infinity,
+                                        decoration: BoxDecoration(
+                                          color: p.card,
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(color: p.border, width: 0.8),
+                                        ),
+                                        child: SingleChildScrollView(
+                                          padding: const EdgeInsets.all(16),
+                                          child: SelectableText(vm.message!, style: TextStyle(color: p.text, fontSize: 15)),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 14),
+                                      Wrap(
+                                        alignment: WrapAlignment.center,
+                                        spacing: 10,
+                                        runSpacing: 10,
+                                        children: [
+                                          if (vm.showSenderInfo)
+                                            _QsButton(
+                                              icon: Icons.verified_user_outlined,
+                                              label: t.verifyPage.title,
+                                              onPressed: () async => await context.push(
+                                                () => VerifyPage(
+                                                  fingerprint: CombinedFingerprint.load(context, vm.sender.fingerprint),
+                                                ),
+                                              ),
+                                            ),
+                                          _QsButton(
+                                            icon: Icons.copy,
+                                            label: t.general.copy,
+                                            onPressed: () {
+                                              unawaited(
+                                                Clipboard.setData(ClipboardData(text: vm.message!)),
+                                              );
+                                              if (checkPlatformIsDesktop()) {
+                                                context.showSnackBar(t.general.copiedToClipboard);
+                                              }
+                                              vm.onAccept();
+                                              context.global.dispatch(NavigateAction.popUntil<WebSharePage>());
+                                            },
+                                          ),
+                                          if (vm.isLink)
+                                            _QsButton(
+                                              icon: Icons.open_in_new,
+                                              label: t.general.open,
+                                              primary: true,
+                                              onPressed: () {
+                                                // ignore: discarded_futures
+                                                launchUrl(Uri.parse(vm.message!), mode: LaunchMode.externalApplication);
+                                                vm.onAccept();
+                                                context.global.dispatch(NavigateAction.popUntil<WebSharePage>());
+                                              },
+                                            ),
+                                        ],
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
                             ),
+                            const SizedBox(height: 16),
                             _Actions(vm),
                           ],
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         );
       },
+    );
+  }
+}
+
+/// Up to four file names with sizes, then "+N".
+class _FileSummary extends StatelessWidget {
+  final List<FileDto> files;
+
+  const _FileSummary({required this.files});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = QsPalette(context);
+    if (files.isEmpty) return const SizedBox();
+    const shown = 4;
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: p.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: p.border, width: 0.8),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        children: [
+          for (final f in files.take(shown))
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  Icon(f.fileType.icon, size: 20, color: p.sub),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      f.fileName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 14, color: p.text),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(f.size.asReadableFileSize, style: TextStyle(fontSize: 13, color: p.sub)),
+                ],
+              ),
+            ),
+          if (files.length > shown)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('+${files.length - shown}', style: TextStyle(fontSize: 13, color: p.sub)),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final String label;
+
+  const _Chip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = QsPalette(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(color: p.chip, borderRadius: BorderRadius.circular(14)),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 13, color: p.sub, fontWeight: FontWeight.w500),
+      ),
+    );
+  }
+}
+
+/// Quick Send pill button: neutral chip, filled accent ([primary]) or red text ([danger]).
+class _QsButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onPressed;
+  final bool primary;
+  final bool danger;
+  final double height;
+
+  const _QsButton({required this.icon, required this.label, required this.onPressed, this.primary = false, this.danger = false, this.height = 42});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = QsPalette(context);
+    final fg = primary ? Colors.white : (danger ? p.danger : p.text);
+    return Opacity(
+      opacity: onPressed == null ? 0.45 : 1,
+      child: Material(
+        color: primary ? p.accent : p.chip,
+        shape: const StadiumBorder(),
+        child: InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: onPressed,
+          child: Container(
+            height: height,
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 19, color: fg),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: fg),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -287,20 +376,17 @@ class _Actions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selectedFiles = context.watch(selectedReceivingFilesProvider);
-    final colorMode = context.watch(settingsProvider.select((state) => state.colorMode));
 
     if (vm.message != null) {
       return Center(
-        child: TextButton.icon(
-          style: TextButton.styleFrom(
-            foregroundColor: Theme.of(context).colorScheme.onSurface,
-          ),
+        child: _QsButton(
+          icon: Icons.close,
+          label: t.general.close,
+          height: 50,
           onPressed: () {
             vm.onAccept();
             context.global.dispatch(NavigateAction.popUntil<WebSharePage>());
           },
-          icon: const Icon(Icons.close),
-          label: Text(t.general.close),
         ),
       );
     }
@@ -312,18 +398,19 @@ class _Actions extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 20),
             child: Text(
               t.receivePage.canceled,
-              style: TextStyle(color: Theme.of(context).colorScheme.warning),
+              style: TextStyle(color: QsPalette(context).danger, fontSize: 15),
               textAlign: TextAlign.center,
             ),
           ),
           Center(
-            child: ElevatedButton.icon(
+            child: _QsButton(
+              icon: Icons.close,
+              label: t.general.close,
+              height: 50,
               onPressed: () {
                 vm.onClose();
                 context.global.dispatch(NavigateAction.popUntil<WebSharePage>());
               },
-              icon: const Icon(Icons.check_circle),
-              label: Text(t.general.close),
             ),
           ),
         ],
@@ -360,26 +447,9 @@ class _Actions extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  elevation: colorMode == ColorMode.yaru ? 0 : null,
-                  backgroundColor: colorMode == ColorMode.yaru ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.error,
-                  foregroundColor: colorMode == ColorMode.yaru ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onError,
-                ),
-                onPressed: decline,
-                icon: const Icon(Icons.close),
-                label: Text(t.general.decline),
-              ),
-              const SizedBox(width: 20),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                ),
-                onPressed: onAccept,
-                icon: const Icon(Icons.check_circle),
-                label: Text(t.general.accept),
-              ),
+              _QsButton(icon: Icons.close, label: t.general.decline, danger: true, height: 50, onPressed: decline),
+              const SizedBox(width: 12),
+              _QsButton(icon: Icons.check, label: t.general.accept, primary: true, height: 50, onPressed: onAccept),
             ],
           ),
         ),

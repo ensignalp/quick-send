@@ -2,7 +2,7 @@
   "expo": {
     "name": "Quick Send",
     "slug": "quick-send",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "platforms": [
       "android",
       "web"
@@ -12,10 +12,12 @@
       "package": "com.ensignsoft.quicksend"
     },
     "web": {
-      "bundler": "metro"
+      "bundler": "metro",
+      "favicon": "./assets/icon.png"
     },
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "icon": "./assets/icon.png"
   }
 }

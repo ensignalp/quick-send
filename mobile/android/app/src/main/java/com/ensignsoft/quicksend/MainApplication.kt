@@ -22,6 +22,8 @@ class MainApplication : Application(), ReactApplication {
     super.onCreate()
     loadReactNative(this)
     ApplicationLifecycleDispatcher.onApplicationCreate(this)
+    // Quick Send: signed background updates (rate-limited; no-op unless configured and enabled).
+    com.ensignsoft.quicksend.core.QuickSendUpdater.maybeCheck(this)
   }
 
   override fun onConfigurationChanged(newConfig: Configuration) {

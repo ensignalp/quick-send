@@ -14,6 +14,8 @@ crate-type = ["cdylib"]
 anyhow = "1.0"
 futures-util = "0.3"
 localsend = { path = "../../packages/core", features = ["discovery"] }
+# Quick Send: transfers between different networks (iroh)
+qs_internet = { path = "../../packages/qs_internet" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
@@ -23,4 +25,6 @@ tracing = "0.1"
 
 [target.'cfg(target_os = "android")'.dependencies]
 jni = "0.21"
+# iroh's DNS resolver reads the Android DNS configuration through the app context (see initAndroidContext)
+ndk-context = "0.1"
 libc = "0.2"

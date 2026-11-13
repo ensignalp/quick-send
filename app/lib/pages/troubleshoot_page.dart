@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:localsend_app/config/theme.dart';
 import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
 import 'package:localsend_app/util/native/cmd_helper.dart';
@@ -133,7 +134,7 @@ class _TroubleshootItemState extends State<_TroubleshootItem> {
                         ...?widget.primaryButton?.onTap?.commands?.map((cmd) {
                           return Padding(
                             padding: const EdgeInsets.only(top: 10),
-                            child: Text(cmd, style: const TextStyle(fontFamily: 'RobotoMono')),
+                            child: Text(cmd, style: const TextStyle(fontFamily: qsFontFamily)),
                           );
                         }),
                       ],

@@ -73,6 +73,10 @@ class Translations with BaseTranslations<AppLocale, Translations> {
   late final Translations$tray$en tray = Translations$tray$en.internal(_root);
   late final Translations$web$en web = Translations$web$en.internal(_root);
   late final Translations$assetPicker$en assetPicker = Translations$assetPicker$en.internal(_root);
+  late final Translations$shareHome$en shareHome = Translations$shareHome$en.internal(_root);
+  late final Translations$qsSettings$en qsSettings = Translations$qsSettings$en.internal(_root);
+  late final Translations$qsInternet$en qsInternet = Translations$qsInternet$en.internal(_root);
+  late final Translations$qsTray$en qsTray = Translations$qsTray$en.internal(_root);
 }
 
 // Path: general
@@ -990,6 +994,530 @@ class Translations$assetPicker$en {
 
   /// en: 'count'
   String get sUnitAssetCountLabel => 'count';
+}
+
+// Path: shareHome
+class Translations$shareHome$en {
+  Translations$shareHome$en.internal(this._root);
+
+  final Translations _root; // ignore: unused_field
+
+  // Translations
+
+  /// en: 'Sent to {name}'
+  String sentTo({required Object name}) => 'Sent to ${name}';
+
+  /// en: 'Received'
+  String get received => 'Received';
+
+  /// en: 'Received from {name}'
+  String receivedFrom({required Object name}) => 'Received from ${name}';
+
+  /// en: '(one) {1 file} (other) {{n} files}'
+  String receivedFiles({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(
+    n,
+    one: '1 file',
+    other: '${n} files',
+  );
+
+  /// en: 'Who can share with you'
+  String get whoCanShare => 'Who can share with you';
+
+  /// en: 'Everyone'
+  String get everyone => 'Everyone';
+
+  /// en: 'No one'
+  String get noOne => 'No one';
+
+  /// en: 'Only for 10 minutes'
+  String get tenMinutes => 'Only for 10 minutes';
+
+  /// en: 'Everyone for 10 minutes'
+  String get everyoneTenMinutes => 'Everyone for 10 minutes';
+
+  /// en: 'Visible to everyone · {time} left'
+  String remaining({required Object time}) => 'Visible to everyone · ${time} left';
+
+  /// en: 'Selected items'
+  String get selectedItems => 'Selected items';
+
+  /// en: '{n} items'
+  String items({required Object n}) => '${n} items';
+
+  /// en: 'Nothing selected'
+  String get noSelection => 'Nothing selected';
+
+  /// en: 'Drag files here or add them, then click a device.'
+  String get noSelectionHint => 'Drag files here or add them, then click a device.';
+
+  /// en: 'Add'
+  String get add => 'Add';
+
+  /// en: 'Clear'
+  String get clear => 'Clear';
+
+  /// en: 'Click the device you want to send files to.'
+  String get clickDevice => 'Click the device you want to send files to.';
+
+  /// en: 'Looking for devices nearby'
+  String get looking => 'Looking for devices nearby';
+
+  /// en: 'Open Quick Send or LocalSend on the other device and keep both on the same network.'
+  String get lookingHint => 'Open Quick Send or LocalSend on the other device and keep both on the same network.';
+
+  /// en: 'QR code or link'
+  String get qrOrLink => 'QR code or link';
+
+  /// en: 'Sending…'
+  String get sending => 'Sending…';
+
+  /// en: 'Waiting…'
+  String get waiting => 'Waiting…';
+
+  /// en: 'Sent'
+  String get sent => 'Sent';
+
+  /// en: 'Declined'
+  String get declined => 'Declined';
+
+  /// en: 'Failed'
+  String get failed => 'Failed';
+
+  /// en: 'Phone'
+  String get phone => 'Phone';
+
+  /// en: 'PC'
+  String get computer => 'PC';
+
+  /// en: 'Browser'
+  String get browser => 'Browser';
+
+  /// en: 'Server'
+  String get server => 'Server';
+
+  /// en: 'This device'
+  String get deviceInfo => 'This device';
+
+  /// en: 'More options'
+  String get more => 'More options';
+
+  /// en: 'Help'
+  String get help => 'Help';
+
+  /// en: 'Device details'
+  String get details => 'Device details';
+
+  /// en: 'Receiving is off'
+  String get offlineHint => 'Receiving is off';
+
+  /// en: 'Send clipboard'
+  String get clipboard => 'Send clipboard';
+
+  /// en: 'Trust this device'
+  String get trust => 'Trust this device';
+
+  /// en: 'Stop trusting'
+  String get untrust => 'Stop trusting';
+
+  /// en: 'Trusted'
+  String get trusted => 'Trusted';
+
+  /// en: 'Receive'
+  String get receiveTab => 'Receive';
+
+  /// en: 'Send'
+  String get sendTab => 'Send';
+
+  /// en: 'Ready to receive…'
+  String get readyTitle => 'Ready to receive…';
+
+  /// en: 'While you are on this screen, anyone nearby can share with you.'
+  String get readyHint => 'While you are on this screen, anyone nearby can share with you.';
+
+  /// en: 'Receiving is unavailable'
+  String get readyOff => 'Receiving is unavailable';
+
+  /// en: 'Check your network connection, then try again.'
+  String get readyOffHint => 'Check your network connection, then try again.';
+
+  /// en: 'To choose who can always share with you, even when you are not on this screen, '
+  String get goSettingsPrefix => 'To choose who can always share with you, even when you are not on this screen, ';
+
+  /// en: 'go to settings'
+  String get goSettingsLink => 'go to settings';
+
+  /// en: 'Choose what to share'
+  String get chooseTitle => 'Choose what to share';
+
+  /// en: 'Select files'
+  String get chooseButton => 'Select files';
+
+  /// en: 'Nearby devices'
+  String get nearby => 'Nearby devices';
+
+  /// en: 'Click a device to send.'
+  String get tapDevice => 'Click a device to send.';
+
+  /// en: 'This device'
+  String get infoTitle => 'This device';
+
+  /// en: 'Address'
+  String get address => 'Address';
+
+  /// en: 'Protocol'
+  String get protocol => 'Protocol';
+
+  /// en: 'LocalSend v2 · HTTPS (encrypted)'
+  String get protocolValue => 'LocalSend v2 · HTTPS (encrypted)';
+
+  /// en: 'Not connected to a network'
+  String get noNetwork => 'Not connected to a network';
+
+  /// en: 'Everyone nearby can share with you'
+  String get statusEveryone => 'Everyone nearby can share with you';
+
+  /// en: 'Only trusted devices can share with you'
+  String get statusTrusted => 'Only trusted devices can share with you';
+
+  /// en: 'Nobody can share with you'
+  String get statusOff => 'Nobody can share with you';
+
+  /// en: 'Recent activity'
+  String get history => 'Recent activity';
+
+  /// en: 'Network'
+  String get network => 'Network';
+
+  /// en: 'Which device?'
+  String get chooseDevice => 'Which device?';
+
+  /// en: 'This number was tried on more than one network. Choose the device to send to. For your security no device is chosen automatically.'
+  String get chooseDeviceHint =>
+      'This number was tried on more than one network. Choose the device to send to. For your security no device is chosen automatically.';
+
+  /// en: 'Checking the other networks…'
+  String get searchingNetworks => 'Checking the other networks…';
+}
+
+// Path: qsSettings
+class Translations$qsSettings$en {
+  Translations$qsSettings$en.internal(this._root);
+
+  final Translations _root; // ignore: unused_field
+
+  // Translations
+
+  /// en: 'Start Quick Send at login?'
+  String get autostartOfferTitle => 'Start Quick Send at login?';
+
+  /// en: 'Quick Send then waits in the system tray after you sign in, so nearby and trusted devices can send you files without opening the app. You can change this in Settings › Desktop.'
+  String get autostartOfferBody =>
+      'Quick Send then waits in the system tray after you sign in, so nearby and trusted devices can send you files without opening the app. You can change this in Settings › Desktop.';
+
+  /// en: 'Start at login'
+  String get autostartOfferYes => 'Start at login';
+
+  /// en: 'Not now'
+  String get autostartOfferNo => 'Not now';
+
+  /// en: 'Automatic updates'
+  String get autoUpdate => 'Automatic updates';
+
+  /// en: 'Download, verify and install new versions in the background'
+  String get autoUpdateDesc => 'Download, verify and install new versions in the background';
+
+  /// en: 'Quick Send {version} is installed. It starts the next time you open the app.'
+  String updateInstalled({required Object version}) => 'Quick Send ${version} is installed. It starts the next time you open the app.';
+
+  /// en: 'Not available in this build'
+  String get updateUnavailable => 'Not available in this build';
+
+  /// en: 'General'
+  String get general => 'General';
+
+  /// en: 'Device name'
+  String get deviceName => 'Device name';
+
+  /// en: 'Shown to nearby devices'
+  String get deviceNameHint => 'Shown to nearby devices';
+
+  /// en: 'Use system name'
+  String get useSystemName => 'Use system name';
+
+  /// en: 'Style'
+  String get theme => 'Style';
+
+  /// en: 'System'
+  String get themeSystem => 'System';
+
+  /// en: 'Light'
+  String get themeLight => 'Light';
+
+  /// en: 'Dark'
+  String get themeDark => 'Dark';
+
+  /// en: 'Language'
+  String get language => 'Language';
+
+  /// en: 'Run at startup'
+  String get autostart => 'Run at startup';
+
+  /// en: 'Start Quick Send when you log in'
+  String get autostartDesc => 'Start Quick Send when you log in';
+
+  /// en: 'Start in the background'
+  String get startHidden => 'Start in the background';
+
+  /// en: 'Do not open the window at startup'
+  String get startHiddenDesc => 'Do not open the window at startup';
+
+  /// en: 'Keep running in the background'
+  String get background => 'Keep running in the background';
+
+  /// en: 'Closing the window keeps Quick Send listening in the tray'
+  String get backgroundDesc => 'Closing the window keeps Quick Send listening in the tray';
+
+  /// en: 'Visibility & network'
+  String get visibility => 'Visibility & network';
+
+  /// en: 'Hidden'
+  String get visHidden => 'Hidden';
+
+  /// en: 'Trusted'
+  String get visTrusted => 'Trusted';
+
+  /// en: 'Everyone'
+  String get visEveryone => 'Everyone';
+
+  /// en: 'Receiving is off. Nobody can see this device or send files to it.'
+  String get visHiddenDesc => 'Receiving is off. Nobody can see this device or send files to it.';
+
+  /// en: 'Only trusted devices can send you files; requests from other devices are declined.'
+  String get visTrustedDesc => 'Only trusted devices can send you files; requests from other devices are declined.';
+
+  /// en: 'Everyone on the network can see this device and send files.'
+  String get visEveryoneDesc => 'Everyone on the network can see this device and send files.';
+
+  /// en: 'Network interface'
+  String get network => 'Network interface';
+
+  /// en: 'All networks'
+  String get allNetworks => 'All networks';
+
+  /// en: 'Files & transfer'
+  String get files => 'Files & transfer';
+
+  /// en: 'Download location'
+  String get destination => 'Download location';
+
+  /// en: 'Change'
+  String get change => 'Change';
+
+  /// en: 'Reset'
+  String get reset => 'Reset';
+
+  /// en: 'Security & pairing'
+  String get security => 'Security & pairing';
+
+  /// en: 'Trusted devices'
+  String get trustedDevices => 'Trusted devices';
+
+  /// en: 'No trusted devices yet. Right-click a device on the main screen and choose “Trust this device”.'
+  String get trustedEmpty => 'No trusted devices yet. Right-click a device on the main screen and choose “Trust this device”.';
+
+  /// en: 'Accept files from trusted devices automatically'
+  String get autoAccept => 'Accept files from trusted devices automatically';
+
+  /// en: 'Files go straight to your download location'
+  String get autoAcceptDesc => 'Files go straight to your download location';
+
+  /// en: 'Require a PIN'
+  String get pin => 'Require a PIN';
+
+  /// en: 'Senders must enter a 4-digit PIN shown here'
+  String get pinDesc => 'Senders must enter a 4-digit PIN shown here';
+
+  /// en: 'PIN: {pin}'
+  String pinValue({required Object pin}) => 'PIN: ${pin}';
+
+  /// en: 'New PIN'
+  String get newPin => 'New PIN';
+
+  /// en: 'Desktop integration'
+  String get integration => 'Desktop integration';
+
+  /// en: 'Show in the file manager'
+  String get contextMenu => 'Show in the file manager';
+
+  /// en: 'Adds “Send with Quick Send” to the right-click menu of Files (Nautilus) and Dolphin'
+  String get contextMenuDesc => 'Adds “Send with Quick Send” to the right-click menu of Files (Nautilus) and Dolphin';
+
+  /// en: 'Send with Quick Send'
+  String get contextMenuLabel => 'Send with Quick Send';
+
+  /// en: 'Remove'
+  String get remove => 'Remove';
+
+  /// en: 'Nearby sharing'
+  String get secNearby => 'Nearby sharing';
+
+  /// en: 'Who can share with you'
+  String get whoCanShare => 'Who can share with you';
+
+  /// en: 'No one'
+  String get modeOff => 'No one';
+
+  /// en: 'Trusted devices'
+  String get modeTrusted => 'Trusted devices';
+
+  /// en: 'Everyone'
+  String get modeEveryone => 'Everyone';
+
+  /// en: 'Receiving'
+  String get secReceive => 'Receiving';
+
+  /// en: 'Quick save'
+  String get quickSave => 'Quick save';
+
+  /// en: 'Accept every request automatically'
+  String get quickSaveDesc => 'Accept every request automatically';
+
+  /// en: 'Appearance'
+  String get secLook => 'Appearance';
+
+  /// en: 'Animations'
+  String get animations => 'Animations';
+
+  /// en: 'Desktop'
+  String get secDesktop => 'Desktop';
+
+  /// en: 'Network'
+  String get secNetwork => 'Network';
+
+  /// en: 'Receive service'
+  String get serverTitle => 'Receive service';
+
+  /// en: 'Running on port {port}'
+  String serverRunning({required Object port}) => 'Running on port ${port}';
+
+  /// en: 'Stopped'
+  String get serverStopped => 'Stopped';
+
+  /// en: 'Restart'
+  String get restart => 'Restart';
+
+  /// en: 'Privacy'
+  String get secPrivacy => 'Privacy';
+
+  /// en: 'Privacy notice'
+  String get privacyNotice => 'Privacy notice';
+
+  /// en: 'Nearby sharing works on your local network: files and messages travel directly between devices over an encrypted (HTTPS) connection and are never uploaded to a server. "Over the internet" (only when you use it) connects the two devices directly when possible, otherwise through an iroh relay server (n0, by default) that forwards the end-to-end encrypted data without being able to read it; the relay and the other device can see your IP address. Anyone who has a code can download those files while you are sharing. Update checks contact GitHub (api.github.com) about every 12 hours when automatic updates are on, and when you check manually. Quick Send does not collect analytics or personal data. Your device name and a random device ID are shared only with devices on the same network so that they can find you.'
+  String get privacyText =>
+      'Nearby sharing works on your local network: files and messages travel directly between devices over an encrypted (HTTPS) connection and are never uploaded to a server. "Over the internet" (only when you use it) connects the two devices directly when possible, otherwise through an iroh relay server (n0, by default) that forwards the end-to-end encrypted data without being able to read it; the relay and the other device can see your IP address. Anyone who has a code can download those files while you are sharing. Update checks contact GitHub (api.github.com) about every 12 hours when automatic updates are on, and when you check manually. Quick Send does not collect analytics or personal data. Your device name and a random device ID are shared only with devices on the same network so that they can find you.';
+
+  /// en: 'About Quick Send'
+  String get aboutApp => 'About Quick Send';
+
+  /// en: 'Keep recent activity'
+  String get saveHistoryDesc => 'Keep recent activity';
+
+  /// en: 'Close the transfer screen when it is done'
+  String get autoFinishDesc => 'Close the transfer screen when it is done';
+}
+
+// Path: qsInternet
+class Translations$qsInternet$en {
+  Translations$qsInternet$en.internal(this._root);
+
+  final Translations _root; // ignore: unused_field
+
+  // Translations
+
+  /// en: 'Over the internet'
+  String get title => 'Over the internet';
+
+  /// en: 'Over the internet'
+  String get menu => 'Over the internet';
+
+  /// en: 'For devices on different networks (mobile data, another Wi-Fi). Files go directly between the devices when possible, otherwise through an encrypted relay. Anyone with the code can download while sharing is on.'
+  String get intro =>
+      'For devices on different networks (mobile data, another Wi-Fi). Files go directly between the devices when possible, otherwise through an encrypted relay. Anyone with the code can download while sharing is on.';
+
+  /// en: 'Not available in this build.'
+  String get unavailable => 'Not available in this build.';
+
+  /// en: 'Send with a code'
+  String get send => 'Send with a code';
+
+  /// en: 'Select files on the Send screen first'
+  String get pickFirst => 'Select files on the Send screen first';
+
+  /// en: 'Receive with a code'
+  String get receive => 'Receive with a code';
+
+  /// en: 'Paste the code you were sent'
+  String get receiveHint => 'Paste the code you were sent';
+
+  /// en: 'Preparing the files…'
+  String get preparing => 'Preparing the files…';
+
+  /// en: 'Send this code to the other device (message, mail…) or scan the QR code. Keep this page open until it is downloaded.'
+  String get shareCode => 'Send this code to the other device (message, mail…) or scan the QR code. Keep this page open until it is downloaded.';
+
+  /// en: 'Waiting for the other device…'
+  String get waiting => 'Waiting for the other device…';
+
+  /// en: 'Connected, downloading…'
+  String get peerConnected => 'Connected, downloading…';
+
+  /// en: 'Sent ✓ — still sharing; stop when you are done.'
+  String get sent => 'Sent ✓ — still sharing; stop when you are done.';
+
+  /// en: 'Stop sharing'
+  String get stop => 'Stop sharing';
+
+  /// en: 'Paste the code:'
+  String get enterCode => 'Paste the code:';
+
+  /// en: 'Receive'
+  String get receiveButton => 'Receive';
+
+  /// en: 'Connecting to the sender…'
+  String get connecting => 'Connecting to the sender…';
+
+  /// en: 'Open folder'
+  String get openFolder => 'Open folder';
+
+  /// en: 'The transfer did not complete. Try again; it resumes where it stopped.'
+  String get failed => 'The transfer did not complete. Try again; it resumes where it stopped.';
+}
+
+// Path: qsTray
+class Translations$qsTray$en {
+  Translations$qsTray$en.internal(this._root);
+
+  final Translations _root; // ignore: unused_field
+
+  // Translations
+
+  /// en: 'Open Quick Send'
+  String get open => 'Open Quick Send';
+
+  /// en: 'Send files…'
+  String get sendFiles => 'Send files…';
+
+  /// en: 'Send clipboard'
+  String get clipboard => 'Send clipboard';
+
+  /// en: 'Who can share with you'
+  String get receive => 'Who can share with you';
+
+  /// en: 'Settings'
+  String get settings => 'Settings';
+
+  /// en: 'Quit Quick Send'
+  String get quit => 'Quit Quick Send';
 }
 
 // Path: receiveTab.infoBox

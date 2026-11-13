@@ -1,0 +1,9 @@
+# Build environment for the Quick Send Linux desktop app (Flutter + Rust via cargokit).
+# The Flutter SDK, pub cache and Rust toolchain are mounted from the host; see
+# support/build/linux/build.sh.
+FROM registry.fedoraproject.org/fedora:44
+RUN dnf -y install --setopt=install_weak_deps=False \
+      clang cmake ninja-build pkgconf-pkg-config gtk3-devel libayatana-appindicator-gtk3-devel \
+      libstdc++-devel xz which file git unzip findutils perl \
+      xorg-x11-server-Xvfb ImageMagick dbus-x11 adwaita-icon-theme \
+    && dnf clean all

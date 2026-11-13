@@ -10,6 +10,15 @@ const startHiddenFlag = '--hidden';
 
 final _logger = Logger('AutoStartHelper');
 
+/// Quick Send: the command that starts this app. Inside an AppImage, [Platform.resolvedExecutable] is a
+/// temporary mount (/tmp/.mount_*) that is gone after a reboot, so the AppImage file itself is used.
+/// Quoted for the desktop entry `Exec` key.
+String _linuxExecQuoted() {
+  final exe = Platform.environment['APPIMAGE'] ?? Platform.resolvedExecutable;
+  final escaped = exe.replaceAll(r'\', r'\\').replaceAll('"', r'\"').replaceAll('`', r'\`').replaceAll(r'$', r'\$');
+  return '"${escaped.replaceAll(r'\', r'\\')}"';
+}
+
 Future<bool> enableAutoStart({required bool startHidden}) async {
   try {
     final packageInfo = await PackageInfo.fromPlatform();
@@ -21,7 +30,7 @@ Future<bool> enableAutoStart({required bool startHidden}) async {
 Type=Application
 Name=${packageInfo.appName}
 Comment=${packageInfo.appName} startup script
-Exec=${Platform.resolvedExecutable}${startHidden ? ' $startHiddenFlag' : ''}
+Exec=${_linuxExecQuoted()}${startHidden ? ' $startHiddenFlag' : ''}
 StartupNotify=false
 Terminal=false
 ''';
@@ -119,4 +128,20 @@ RegistryKey _getWindowsRegistryKey() {
 
 String _getLinuxFilePath(String appName) {
   return '${Platform.environment['HOME']}/.config/autostart/$appName.desktop';
+}
+
+/// Quick Send: rewrites an enabled Linux autostart entry when it points at a stale executable
+/// (an earlier AppImage mount under /tmp, or an AppImage that has since moved).
+Future<void> refreshLinuxAutoStartPath() async {
+  if (defaultTargetPlatform != TargetPlatform.linux || !await isAutoStartEnabled()) return;
+  try {
+    final packageInfo = await PackageInfo.fromPlatform();
+    final contents = File(_getLinuxFilePath(packageInfo.packageName)).readAsStringSync();
+    if (!contents.contains('Exec=${_linuxExecQuoted()}')) {
+      await enableAutoStart(startHidden: contents.contains(startHiddenFlag));
+      _logger.info('Updated the autostart entry to the current executable');
+    }
+  } catch (e) {
+    _logger.warning('Could not refresh the autostart entry: $e');
+  }
 }
