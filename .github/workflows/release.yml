@@ -28,7 +28,7 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: mobile/package-lock.json
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
       - name: Install NDK
         run: sdkmanager "ndk;27.1.12297006" "platforms;android-37" "build-tools;37.0.0"
       - name: Install Rust Android targets
