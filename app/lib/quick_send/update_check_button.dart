@@ -1,6 +1,7 @@
 // Quick Send addition (not part of upstream LocalSend).
 import 'package:flutter/material.dart';
 import 'package:localsend_app/gen/strings.g.dart';
+import 'package:localsend_app/quick_send/qs_style.dart';
 import 'package:localsend_app/quick_send/update_checker.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -37,27 +38,22 @@ class _UpdateCheckButtonState extends State<UpdateCheckButton> {
       UpdateCheckFailed() => t.aboutPage.updateCheckFailed,
       UpdateCheckNotConfigured() => t.aboutPage.updateCheckUnavailable,
     };
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextButton.icon(
-          onPressed: _checking ? null : _check,
-          icon: _checking
-              ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Icon(Icons.system_update_alt),
-          label: Text(_checking ? t.aboutPage.checkingUpdates : t.aboutPage.checkUpdates),
-        ),
-        if (message != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Semantics(liveRegion: true, child: Text(message)),
-          ),
-        if (result is UpdateAvailable)
-          TextButton(
-            onPressed: () => launchUrl(result.releaseUrl, mode: LaunchMode.externalApplication),
-            child: Text(t.aboutPage.openRelease),
-          ),
-      ],
+    final p = QsPalette(context);
+    // Quick Send design: one row; when an update is available, tapping it opens the release page.
+    return Semantics(
+      liveRegion: true,
+      child: QsRow(
+        title: result is UpdateAvailable ? t.aboutPage.openRelease : (_checking ? t.aboutPage.checkingUpdates : t.aboutPage.checkUpdates),
+        hint: message,
+        trailing: _checking
+            ? SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2, color: p.accent))
+            : Icon(result is UpdateAvailable ? Icons.open_in_new : Icons.system_update_alt, size: 20, color: p.sub),
+        onTap: _checking
+            ? null
+            : result is UpdateAvailable
+            ? () => launchUrl(result.releaseUrl, mode: LaunchMode.externalApplication)
+            : _check,
+      ),
     );
   }
 }

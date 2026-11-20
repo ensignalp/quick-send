@@ -302,7 +302,7 @@
   "aboutPage": {
     "title": "Quick Send hakkında",
     "description": [
-      "Quick Send, internet bağlantısı olmadan yerel ağınızdaki yakındaki cihazlarla dosya ve mesajları güvenli biçimde paylaşmanızı sağlayan ücretsiz ve açık kaynaklı bir uygulamadır.",
+      "Quick Send, yerel ağınızdaki yakındaki cihazlarla internet bağlantısı olmadan, istediğinizde de farklı ağlardaki cihazlarla internet üzerinden dosya ve mesajları güvenli biçimde paylaşmanızı sağlayan ücretsiz ve açık kaynaklı bir uygulamadır.",
       "Quick Send şu anda Android ve Linux için kullanılabilir."
     ],
     "author": "LocalSend yazarı",
@@ -520,6 +520,8 @@
     "sUnitAssetCountLabel": "sayım"
   },
   "shareHome": {
+    "trustAndAccept": "Güven ve kabul et",
+    "identityChanged": "Bu, güvendiğin {name} değil: kimliği değişmiş (örneğin Quick Send yeniden kurulmuş). Senin cihazınsa yeniden güven.",
     "sentTo": "{name} cihazına gönderildi",
     "received": "Alındı",
     "receivedFrom": "{name} cihazından alındı",
@@ -585,6 +587,10 @@
     "searchingNetworks": "Diğer ağlar kontrol ediliyor…"
   },
   "qsSettings": {
+    "profilePhoto": "Profil fotoğrafı",
+    "profilePhotoDesc": "Yalnızca bu cihazda görünür",
+    "profilePhotoChange": "Fotoğrafı değiştir",
+    "profilePhotoRemove": "Fotoğrafı kaldır",
     "autostartOfferTitle": "Quick Send oturum açılınca başlasın mı?",
     "autostartOfferBody": "Böylece oturum açtığında sistem tepsisinde bekler; yakındaki ve güvenilir cihazlar uygulamayı açmadan sana dosya gönderebilir. Ayarlar › Masaüstü'nden değiştirebilirsin.",
     "autostartOfferYes": "Oturum açılınca başlat",
@@ -634,6 +640,7 @@
     "contextMenu": "Dosya yöneticisinde göster",
     "contextMenuDesc": "Dosyalar (Nautilus) ve Dolphin sağ tık menüsüne “Quick Send ile gönder” ekler",
     "contextMenuLabel": "Quick Send ile gönder",
+    "contextMenuRestartHint": "Yeni menü öğesinin görünmesi için Dosyalar uygulamasını bir kez kapatıp aç (veya oturumu kapatıp aç).",
     "remove": "Kaldır",
     "secNearby": "Yakından paylaşım",
     "whoCanShare": "Sizinle paylaşım yapabilenler",
@@ -659,6 +666,7 @@
     "autoFinishDesc": "Aktarım bitince aktarım ekranını kapat"
   },
   "qsInternet": {
+    "sentStopped": "Dosyalar indirildi. Paylaşım durduruldu, kod artık çalışmaz.",
     "title": "İnternet üzerinden",
     "menu": "İnternet üzerinden",
     "intro": "Farklı ağlardaki cihazlar için (mobil veri, başka Wi-Fi). Dosyalar mümkünse doğrudan, değilse şifreli bir aktarıcı üzerinden gider. Paylaşım açıkken kodu bilen herkes indirebilir.",
@@ -678,6 +686,39 @@
     "connecting": "Gönderene bağlanılıyor…",
     "openFolder": "Klasörü aç",
     "failed": "Aktarım tamamlanmadı. Tekrar dene; kaldığı yerden devam eder."
+  },
+  "qsManual": {
+    "noNetwork": "Bu cihazda yerel ağ adresi bulunamadı; bunun yerine IP adresinin tamamını yaz.",
+    "hashtagHint": "Diğer cihazın adresinin son sayısını yaz (Quick Send veya LocalSend bilgi ekranında görünür).",
+    "searching": "Cihaz aranıyor…",
+    "notFound": "Bu adreste yanıt veren Quick Send veya LocalSend cihazı yok. Ayrıntı için dokun."
+  },
+  "qsHistory": {
+    "all": "Tümü",
+    "images": "Resimler",
+    "videos": "Videolar",
+    "documents": "Belgeler",
+    "messages": "Mesajlar",
+    "other": "Diğer",
+    "anyTime": "Tüm zamanlar",
+    "today": "Bugün",
+    "yesterday": "Dün",
+    "last7": "Son 7 gün",
+    "last30": "Son 30 gün",
+    "pickRange": "Tarih seç…",
+    "noMatch": "Bu filtrelere uyan kayıt yok."
+  },
+  "qsWhatsNew": {
+    "title": "Quick Send {version} yenilikleri",
+    "internet": "İnternet üzerinden: telefonların kolay okuduğu daha büyük QR kod; dosyalar ulaşınca paylaşım kendiliğinden durur.",
+    "qrPage": "QR kod ve bağlantı sayfası Quick Send tasarımında; QR kod doğrudan sayfada.",
+    "manual": "Adrese gönder: IP adresinin noktaları yazarken eklenir; # ve adresin son sayısı yeniden çalışıyor.",
+    "trusted": "Güvenilir bir cihazın kimliği değiştiyse (örneğin Quick Send yeniden kurulduysa) tek dokunuşla yeniden güvenebilirsin.",
+    "history": "Son etkinliklerde resim, video, belge, mesaj ve tarih filtreleri var.",
+    "avatar": "Ayarlar'dan profil fotoğrafı ekleyebilirsin (yalnızca bu cihazda görünür).",
+    "chooser": "Dosya ve klasörler masaüstünün kendi dosya seçicisiyle (GNOME, KDE) seçilir; son klasör hatırlanır.",
+    "contextMenu": "Dosyalar'daki \"Quick Send ile gönder\" öğesi, ayarı değiştirdiğin anda görünür veya kaybolur.",
+    "window": "Pencere 575 × 770 açılır; başlık çubuğu sistem temanı ve ikonlarını izler."
   },
   "qsTray": {
     "open": "Quick Send'i aç",

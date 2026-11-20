@@ -93,7 +93,7 @@ android {
         applicationId "com.ensignsoft.quicksend"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionName "1.0.0"
+        versionName "1.1.0"
         // Quick Send: one scheme for local and CI builds, derived from versionName: X.Y.Z -> X*10000 + Y*100 + Z
         // (1.0.0 -> 10000). Y and Z must stay below 100. QS_VERSION_CODE can still override it.
         def qsVersionParts = versionName.tokenize('.').collect { it.toInteger() }

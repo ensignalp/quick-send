@@ -1,7 +1,10 @@
+import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:file_selector/file_selector.dart' as file_selector;
 import 'package:flutter/foundation.dart';
+import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/provider/device_info_provider.dart';
+import 'package:localsend_app/quick_send/portal_file_chooser.dart';
 import 'package:localsend_app/util/native/channel/android_channel.dart' as android_channel;
 import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:refena_flutter/refena_flutter.dart';
@@ -21,6 +24,11 @@ Future<String?> pickDirectoryPath() async {
     /// Also, on iOS, file_selector does not work with directories.
     return await FilePicker.getDirectoryPath();
   } else {
+    // Quick Send (Linux): the desktop's own chooser through the portal; falls back when it is missing.
+    if (defaultTargetPlatform == TargetPlatform.linux) {
+      final portal = await PortalFileChooser.open(title: t.sendTab.picker.folder, directory: true);
+      if (portal != null) return portal.firstOrNull;
+    }
     return await file_selector.getDirectoryPath();
   }
 }

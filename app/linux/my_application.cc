@@ -21,10 +21,6 @@ struct _MyApplication {
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
-// Title bar brightness requested by the app theme (-1: none yet, follow the desktop).
-static int qs_dark_override = -1;
-static void qs_apply_brightness();
-
 static void platform_method_call_cb(FlMethodChannel* channel,
                                     FlMethodCall* method_call,
                                     gpointer user_data) {
@@ -32,14 +28,6 @@ static void platform_method_call_cb(FlMethodChannel* channel,
   if (strcmp(fl_method_call_get_name(method_call), "isWayland") == 0) {
     response = FL_METHOD_RESPONSE(fl_method_success_response_new(
         fl_value_new_bool(GPOINTER_TO_INT(user_data))));
-  } else if (strcmp(fl_method_call_get_name(method_call), "setTitleBarDark") == 0) {
-    // Quick Send: the title bar follows the app's light/dark theme.
-    FlValue* args = fl_method_call_get_args(method_call);
-    if (args != nullptr && fl_value_get_type(args) == FL_VALUE_TYPE_BOOL) {
-      qs_dark_override = fl_value_get_bool(args) ? 1 : 0;
-      qs_apply_brightness();
-    }
-    response = FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
   } else {
     response = FL_METHOD_RESPONSE(fl_method_not_implemented_response_new());
   }
@@ -47,34 +35,43 @@ static void platform_method_call_cb(FlMethodChannel* channel,
 }
 
 // ---------------------------------------------------------------------------
-// GNOME look.
+// GNOME window.
 //
-// GNOME's own apps are GTK4/libadwaita and ignore ~/.config/gtk-3.0. A GTK3 app
-// like this one inherits the GTK3 theme and every rule of
-// ~/.config/gtk-3.0/gtk.css instead. Theming tools write title button rules
-// there that can leave the minimize/maximize icons transparent until hovered
-// (e.g. colours referencing an undefined @window-fg-color). On GNOME the window
-// therefore uses Adwaita, light or dark with the app theme (desktop color-scheme until the app reports it), and
-// gets libadwaita-style window controls from a provider that sits above the
-// user stylesheet (GTK3 resolves provider priority before selector specificity).
+// The title bar follows the operating system: the GTK theme, icon theme and
+// button layout come from the desktop settings (e.g. Breeze-Dark + breeze
+// icons), and light/dark from org.gnome.desktop.interface color-scheme, the
+// way GNOME's own apps follow it. Nothing is drawn by the app.
+//
+// One compatibility fix: theme tools (e.g. rewaita) write title button rules
+// into ~/.config/gtk-3.0/gtk.css that are meant for GTK4/libadwaita (colours by
+// names GTK3 does not resolve, icons set to transparent). In a GTK3 window they
+// leave the minimize/maximize/close buttons invisible or visible only on hover.
+// Only when that stylesheet styles title buttons, the colour, background and
+// transparency it puts on them are undone at a priority just above it; the
+// buttons then show the system icon theme's window-*-symbolic icons (e.g.
+// breeze) in the theme's header colour. Nothing is drawn by the app, and
+// without such a stylesheet the theme is left completely alone.
 // ---------------------------------------------------------------------------
 
-static const char* kQsGnomeCss =
-    "headerbar.qs-headerbar { min-height: 46px; padding: 0 6px; }\n"
-    "headerbar.qs-headerbar .title { font-weight: bold; }\n"
-    "button.titlebutton {\n"
-    "  min-width: 24px; min-height: 24px; padding: 0; margin: 0 4px;\n"
-    "  border: none; border-radius: 9999px; box-shadow: none; outline: none;\n"
-    "  background-color: alpha(currentColor, 0.1); background-image: none;\n"
-    "  color: inherit; opacity: 1; -gtk-icon-shadow: none; -gtk-icon-transform: none;\n"
+static const char* kQsTitleButtonCss =
+    "headerbar button.titlebutton, .titlebar button.titlebutton {\n"
+    "  background-image: none; background-color: transparent; color: @theme_fg_color;\n"
+    "  box-shadow: none; border: none; min-width: 24px; min-height: 24px; padding: 2px; opacity: 1;\n"
     "}\n"
-    "button.titlebutton:hover { background-color: alpha(currentColor, 0.15); }\n"
-    "button.titlebutton:active { background-color: alpha(currentColor, 0.3); }\n"
-    "button.titlebutton:backdrop { opacity: 0.7; }\n"
-    "button.titlebutton > image {\n"
-    "  color: inherit; opacity: 1; padding: 0; margin: 0; min-width: 16px; min-height: 16px;\n"
-    "  -gtk-icon-shadow: none; -gtk-icon-transform: none;\n"
+    "headerbar button.titlebutton:hover, .titlebar button.titlebutton:hover {\n"
+    "  background-color: alpha(@theme_fg_color, 0.12);\n"
+    "}\n"
+    "headerbar button.titlebutton > image, .titlebar button.titlebutton > image {\n"
+    "  color: inherit; opacity: 1; -gtk-icon-transform: none; -gtk-icon-shadow: none;\n"
     "}\n";
+
+// True when the user stylesheet has its own title button rules (see above).
+static gboolean qs_user_css_styles_title_buttons() {
+  g_autofree gchar* path = g_build_filename(g_get_user_config_dir(), "gtk-3.0", "gtk.css", nullptr);
+  g_autofree gchar* contents = nullptr;
+  if (!g_file_get_contents(path, &contents, nullptr, nullptr)) return FALSE;
+  return strstr(contents, "titlebutton") != nullptr;
+}
 
 static gboolean qs_is_gnome() {
   const char* desktop = getenv("XDG_CURRENT_DESKTOP");
@@ -91,12 +88,10 @@ static GSettings* qs_settings_if_has_key(const char* schema_id, const char* key)
 
 static GSettings* qs_interface_settings = nullptr;
 
-// Dark title bar when the app theme is dark; before the app reports its theme, the desktop's colour scheme.
+// Light/dark as the desktop's colour scheme says (GTK3 does not read color-scheme by itself).
 static void qs_apply_brightness() {
   gboolean dark = FALSE;
-  if (qs_dark_override >= 0) {
-    dark = qs_dark_override == 1;
-  } else if (qs_interface_settings != nullptr) {
+  if (qs_interface_settings != nullptr) {
     g_autofree gchar* scheme = g_settings_get_string(qs_interface_settings, "color-scheme");
     dark = g_strcmp0(scheme, "prefer-dark") == 0;
   }
@@ -113,15 +108,13 @@ static void qs_sync_button_layout(GSettings* settings, const gchar* key, gpointe
 }
 
 static void qs_css_error(GtkCssProvider* provider, GtkCssSection* section, GError* error, gpointer user_data) {
-  g_warning("Quick Send header bar CSS: %s", error->message);
+  g_warning("Quick Send compatibility CSS: %s", error->message);
 }
 
 static void qs_apply_gnome_look() {
   static GSettings* wm_settings = nullptr;
   static GtkCssProvider* provider = nullptr;
   if (provider != nullptr) return;
-
-  g_object_set(gtk_settings_get_default(), "gtk-theme-name", "Adwaita", "gtk-icon-theme-name", "Adwaita", nullptr);
 
   qs_interface_settings = qs_settings_if_has_key("org.gnome.desktop.interface", "color-scheme");
   if (qs_interface_settings != nullptr) {
@@ -135,10 +128,14 @@ static void qs_apply_gnome_look() {
   }
 
   provider = gtk_css_provider_new();
-  g_signal_connect(provider, "parsing-error", G_CALLBACK(qs_css_error), nullptr);
-  gtk_css_provider_load_from_data(provider, kQsGnomeCss, -1, nullptr);
-  gtk_style_context_add_provider_for_screen(gdk_screen_get_default(), GTK_STYLE_PROVIDER(provider),
-                                            GTK_STYLE_PROVIDER_PRIORITY_USER + 100);
+  if (qs_user_css_styles_title_buttons()) {
+    g_signal_connect(provider, "parsing-error", G_CALLBACK(qs_css_error), nullptr);
+    gtk_css_provider_load_from_data(provider, kQsTitleButtonCss, -1, nullptr);
+    // Just above the user stylesheet, whose title button rules it undoes.
+    gtk_style_context_add_provider_for_screen(gdk_screen_get_default(), GTK_STYLE_PROVIDER(provider),
+                                              GTK_STYLE_PROVIDER_PRIORITY_USER + 1);
+    g_debug("Quick Send: user stylesheet title button rules neutralised");
+  }
 }
 
 // Implements GApplication::activate.
@@ -170,8 +167,7 @@ static void my_application_activate(GApplication* application) {
     start_hidden = true;
   }
 
-  // GNOME: a real GtkHeaderBar styled like libadwaita, light or dark with the app
-  // theme (setTitleBarDark; the desktop colour scheme until the app reports it). Elsewhere: honour GTK_CSD=1, else
+  // GNOME: a GtkHeaderBar in the system theme (see "GNOME window" above). Elsewhere: honour GTK_CSD=1, else
   // let the desktop draw its own decorations.
   const char* GTK_CSD = getenv("GTK_CSD");
   const bool gnome = qs_is_gnome();
@@ -180,8 +176,7 @@ static void my_application_activate(GApplication* application) {
     gtk_widget_show(GTK_WIDGET(header_bar));
     gtk_header_bar_set_title(header_bar, "Quick Send");
     gtk_header_bar_set_show_close_button(header_bar, TRUE);
-    gtk_style_context_add_class(gtk_widget_get_style_context(GTK_WIDGET(header_bar)), "qs-headerbar");
-    gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
+        gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
   } else {
     gtk_window_set_title(window, "Quick Send");
   }
@@ -189,7 +184,7 @@ static void my_application_activate(GApplication* application) {
     qs_apply_gnome_look();
   }
 
-  gtk_window_set_default_size(window, 900, 500);
+  gtk_window_set_default_size(window, 575, 770);
 
   // Window icon. X11 docks and window switchers use it when no desktop entry
   // matches the window; on Wayland the compositor resolves the app id

@@ -30,6 +30,8 @@ import 'package:localsend_app/quick_send/auto_update.dart';
 import 'package:localsend_app/quick_send/autostart_offer.dart';
 import 'package:localsend_app/quick_send/desktop_notify.dart';
 import 'package:localsend_app/quick_send/single_instance.dart';
+import 'package:localsend_app/quick_send/update_checker.dart';
+import 'package:localsend_app/quick_send/whats_new.dart';
 import 'package:localsend_app/util/i18n.dart';
 import 'package:localsend_app/util/native/autostart_helper.dart';
 import 'package:localsend_app/util/native/cache_helper.dart';
@@ -137,6 +139,10 @@ Future<RefenaContainer> preInit(List<String> args) async {
     }
     // Quick Send: drop the "Scripts > Quick Send" entry older builds installed.
     await removeLegacyContextMenuScript();
+    if (!persistenceService.isQsContextMenuMarkerMigrated()) {
+      await migrateLinuxContextMenuMarker();
+      await persistenceService.setQsContextMenuMarkerMigrated();
+    }
 
     // initialize size and position
     await WindowManager.instance.ensureInitialized();
@@ -344,7 +350,18 @@ Future<void> postInit(BuildContext context, Ref ref, bool appStart) async {
   }
 
   // Quick Send: LocalSend's "What's new" page is not shown (it describes upstream releases).
+  // Quick Send: "What's new" once after an update (the previous version is read before it is overwritten).
+  final previousVersion = ref.read(persistenceProvider).getWhatsNew();
   await ref.future(versionProvider).then((version) async {
+    final items = qsWhatsNewItems(version.version);
+    if (appStart &&
+        items != null &&
+        !ref.read(persistenceProvider).isFirstAppStart &&
+        previousVersion != null &&
+        isNewerVersion(version.version, previousVersion)) {
+      // ignore: unawaited_futures
+      ref.global.dispatchAsync(NavigateAction.push(QsWhatsNewPage(version: version.version, items: items)));
+    }
     await ref.read(persistenceProvider).setWhatsNew(version.version);
     // Quick Send: background updates (AppImage builds with a release repository and signing key only).
     if (appStart) {

@@ -3,5 +3,6 @@ module.exports = {
   moduleNameMapper: {
     '^@expo/vector-icons/MaterialCommunityIcons$': '<rootDir>/__mocks__/MaterialCommunityIcons.tsx',
     '^@expo-google-fonts/space-grotesk$': '<rootDir>/__mocks__/spaceGrotesk.ts',
+    '^expo-camera$': '<rootDir>/__mocks__/expoCamera.tsx',
   },
 };

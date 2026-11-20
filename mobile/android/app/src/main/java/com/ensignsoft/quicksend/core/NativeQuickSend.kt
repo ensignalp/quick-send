@@ -18,6 +18,8 @@ object NativeQuickSend {
   @JvmStatic external fun internetCancel(id: String)
   @JvmStatic external fun internetIsValidTicket(ticket: String): Boolean
   @JvmStatic external fun initAndroidContext(context: android.content.Context)
+  // Quick Send: manual sending — asks host:port who it is; answers with a "probeResult" event.
+  @JvmStatic external fun probe(requestId: String, host: String, port: Int)
 }
 
 interface QuickSendCoreCallbacks {

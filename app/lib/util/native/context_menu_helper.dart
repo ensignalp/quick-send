@@ -45,7 +45,9 @@ Future<bool> disableContextMenu() async {
         }
         return true;
       case TargetPlatform.linux:
-        for (final file in [..._linuxFiles(), _legacyNautilusScript()]) {
+        // The Nautilus extension stays installed but hides its item when the marker is gone, so the
+        // change shows at once (nautilus-python only loads extensions when Nautilus starts).
+        for (final file in [_linuxEnabledMarker(), _linuxFiles()[1], _legacyNautilusScript()]) {
           if (await file.exists()) {
             await file.delete();
           }
@@ -64,7 +66,7 @@ Future<bool> isContextMenuEnabled() async {
     case TargetPlatform.windows:
       return await File(_getWindowsFilePath(_windowsFileName)).exists();
     case TargetPlatform.linux:
-      return await _linuxFiles().first.exists();
+      return await _linuxEnabledMarker().exists() && await _linuxFiles().first.exists();
     default:
       return false;
   }
@@ -118,6 +120,13 @@ Future<void> removeLegacyContextMenuScript() async {
   }
 }
 
+/// Present while "Show in file manager" is on; the Nautilus extension checks it on every right click.
+File _linuxEnabledMarker() => File('${_linuxDataHome()}/com.ensignsoft.quicksend/context-menu-enabled');
+
+/// True after [enableContextMenu] installed the Nautilus extension for the first time: a running Nautilus
+/// only picks it up after it restarts (`nautilus -q`, or logging out and in).
+bool contextMenuNeedsFileManagerRestart = false;
+
 /// The command that starts this app (the AppImage when running from one).
 String _linuxExecutable() => Platform.environment['APPIMAGE'] ?? Platform.resolvedExecutable;
 
@@ -137,15 +146,19 @@ Future<bool> _enableLinux(String label) async {
     await removeLegacyContextMenuScript();
 
     final extension = files[0];
+    contextMenuNeedsFileManagerRestart = !await extension.exists();
     await extension.parent.create(recursive: true);
     await extension.writeAsString('''# Installed by Quick Send (Settings > Send with Quick Send).
 # Adds "${label.replaceAll('\n', ' ')}" to the Nautilus context menu (requires nautilus-python).
+import os
 import subprocess
 
 from gi.repository import GObject, Nautilus
 
 EXECUTABLE = ${_pythonString(exe)}
 LABEL = ${_pythonString(label)}
+# Removed when the setting is turned off; checked on every right click so no Nautilus restart is needed.
+ENABLED_MARKER = ${_pythonString(_linuxEnabledMarker().path)}
 
 
 class QuickSendMenuProvider(GObject.GObject, Nautilus.MenuProvider):
@@ -157,12 +170,18 @@ class QuickSendMenuProvider(GObject.GObject, Nautilus.MenuProvider):
 
     def get_file_items(self, *args):
         files = args[-1]
+        if not os.path.exists(ENABLED_MARKER) or not os.path.exists(EXECUTABLE):
+            return []
         if not files or any(f.get_uri_scheme() != "file" for f in files):
             return []
         item = Nautilus.MenuItem(name="QuickSend::send", label=LABEL, icon="com.ensignsoft.quicksend")
         item.connect("activate", self._send, files)
         return [item]
 ''');
+
+    final marker = _linuxEnabledMarker();
+    await marker.parent.create(recursive: true);
+    await marker.writeAsString('');
 
     final serviceMenu = files[1];
     await serviceMenu.parent.create(recursive: true);
@@ -184,5 +203,20 @@ Exec=${_desktopExecQuote(exe)} %F
   } catch (e) {
     _logger.severe('Failed to enable Linux context menu: $e');
     return false;
+  }
+}
+
+/// Quick Send 1.1.0 migration: earlier builds had no enabled-marker; an installed extension meant "on".
+/// Run once; afterwards an extension without the marker means the user turned the setting off.
+Future<void> migrateLinuxContextMenuMarker() async {
+  if (defaultTargetPlatform != TargetPlatform.linux) return;
+  try {
+    final marker = _linuxEnabledMarker();
+    if (await _linuxFiles().first.exists() && !await marker.exists()) {
+      await marker.parent.create(recursive: true);
+      await marker.writeAsString('');
+    }
+  } catch (e) {
+    _logger.warning('Context menu migration failed: $e');
   }
 }

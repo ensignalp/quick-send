@@ -216,3 +216,40 @@ or released**. The released Android app is `mobile/` (React Native + JNI to
   and in CI. Windows installer and CLI versions follow the app (1.0.0).
 - Releases: repository `ensignalp/quick-send`; signing material lives outside the
   repository (see docs/RELEASE.md).
+
+## 1.1.0
+
+- Desktop window opens at 575 × 770 (new saved-size keys so the default applies once).
+- Title bar follows the operating system (GTK theme, icon theme, button layout,
+  colour scheme). The forced Adwaita theme and the custom-drawn buttons are gone.
+  Only when the user's `~/.config/gtk-3.0/gtk.css` styles `titlebutton` (theming
+  tools such as rewaita do, and can hide the buttons under a non-Adwaita theme) a
+  small reset at USER+1 priority keeps the theme's own button icons visible.
+- "Show in file manager" (Nautilus): the extension checks an enabled-marker on every
+  right click, so turning the setting off/on takes effect without restarting Files
+  (nautilus-python loads extensions only at startup; a first install still needs one
+  restart, the app says so). One-time migration for 1.0.0 installs.
+- Trusted devices: the request screen offers "Trust and accept"; when a trusted
+  device's identity changed (reinstall), it says so instead of trusting by name.
+- Manual sending (desktop): Quick Send design, IP entry with automatic dots
+  (`ip_input_formatter.dart`), hashtag mode kept (last number on the own /24
+  networks, as in LocalSend). Android: new "Send to an address" with the same rules
+  (`src/address.ts`, JNI `probe` = LocalSend register request).
+- QR code and link page (web share): Quick Send design, QR code on the page.
+- Over the internet: larger QR codes in alphanumeric mode (codes are accepted in any
+  case), sharing stops after the first completed download; Android can show and scan
+  QR codes (`src/qr.tsx`, expo-camera).
+- About page and the update check in the Quick Send design; the app theme gives every
+  dialog, bottom sheet, text field, page and card the Quick Send look (also screens
+  inherited from LocalSend); default accent instead of LocalSend blue.
+- Profile photo on the desktop (`quick_send/avatar.dart`), local to the device as on
+  Android.
+- Recent activity: desktop page rewritten with type/date filters and day groups;
+  Android has a page instead of a sheet, with filters (entries now record file kinds),
+  and the back button returns to the home screen.
+- Android Direct Share: discovered devices are sharing shortcuts in the system share
+  sheet; picking one sends the shared files straight to it.
+- Linux file chooser: xdg-desktop-portal FileChooser (`quick_send/portal_file_chooser.dart`)
+  for files, folders and the profile photo, last folder remembered, silent fallback
+  to the previous chooser.
+- "What's new" page after an update (desktop and Android), once per version.

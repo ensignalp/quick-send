@@ -100,6 +100,12 @@ class TranslationsTr extends Translations with BaseTranslations<AppLocale, Trans
   @override
   late final _Translations$qsInternet$tr qsInternet = _Translations$qsInternet$tr._(_root);
   @override
+  late final _Translations$qsManual$tr qsManual = _Translations$qsManual$tr._(_root);
+  @override
+  late final _Translations$qsHistory$tr qsHistory = _Translations$qsHistory$tr._(_root);
+  @override
+  late final _Translations$qsWhatsNew$tr qsWhatsNew = _Translations$qsWhatsNew$tr._(_root);
+  @override
   late final _Translations$qsTray$tr qsTray = _Translations$qsTray$tr._(_root);
 }
 
@@ -528,7 +534,7 @@ class _Translations$aboutPage$tr extends Translations$aboutPage$en {
   String get title => 'Quick Send hakkında';
   @override
   List<String> get description => [
-    'Quick Send, internet bağlantısı olmadan yerel ağınızdaki yakındaki cihazlarla dosya ve mesajları güvenli biçimde paylaşmanızı sağlayan ücretsiz ve açık kaynaklı bir uygulamadır.',
+    'Quick Send, yerel ağınızdaki yakındaki cihazlarla internet bağlantısı olmadan, istediğinizde de farklı ağlardaki cihazlarla internet üzerinden dosya ve mesajları güvenli biçimde paylaşmanızı sağlayan ücretsiz ve açık kaynaklı bir uygulamadır.',
     'Quick Send şu anda Android ve Linux için kullanılabilir.',
   ];
   @override
@@ -802,6 +808,11 @@ class _Translations$shareHome$tr extends Translations$shareHome$en {
 
   // Translations
   @override
+  String get trustAndAccept => 'Güven ve kabul et';
+  @override
+  String identityChanged({required Object name}) =>
+      'Bu, güvendiğin ${name} değil: kimliği değişmiş (örneğin Quick Send yeniden kurulmuş). Senin cihazınsa yeniden güven.';
+  @override
   String sentTo({required Object name}) => '${name} cihazına gönderildi';
   @override
   String get received => 'Alındı';
@@ -941,6 +952,14 @@ class _Translations$qsSettings$tr extends Translations$qsSettings$en {
 
   // Translations
   @override
+  String get profilePhoto => 'Profil fotoğrafı';
+  @override
+  String get profilePhotoDesc => 'Yalnızca bu cihazda görünür';
+  @override
+  String get profilePhotoChange => 'Fotoğrafı değiştir';
+  @override
+  String get profilePhotoRemove => 'Fotoğrafı kaldır';
+  @override
   String get autostartOfferTitle => 'Quick Send oturum açılınca başlasın mı?';
   @override
   String get autostartOfferBody =>
@@ -1040,6 +1059,8 @@ class _Translations$qsSettings$tr extends Translations$qsSettings$en {
   @override
   String get contextMenuLabel => 'Quick Send ile gönder';
   @override
+  String get contextMenuRestartHint => 'Yeni menü öğesinin görünmesi için Dosyalar uygulamasını bir kez kapatıp aç (veya oturumu kapatıp aç).';
+  @override
   String get remove => 'Kaldır';
   @override
   String get secNearby => 'Yakından paylaşım';
@@ -1096,6 +1117,8 @@ class _Translations$qsInternet$tr extends Translations$qsInternet$en {
 
   // Translations
   @override
+  String get sentStopped => 'Dosyalar indirildi. Paylaşım durduruldu, kod artık çalışmaz.';
+  @override
   String get title => 'İnternet üzerinden';
   @override
   String get menu => 'İnternet üzerinden';
@@ -1134,6 +1157,87 @@ class _Translations$qsInternet$tr extends Translations$qsInternet$en {
   String get openFolder => 'Klasörü aç';
   @override
   String get failed => 'Aktarım tamamlanmadı. Tekrar dene; kaldığı yerden devam eder.';
+}
+
+// Path: qsManual
+class _Translations$qsManual$tr extends Translations$qsManual$en {
+  _Translations$qsManual$tr._(TranslationsTr root) : this._root = root, super.internal(root);
+
+  final TranslationsTr _root; // ignore: unused_field
+
+  // Translations
+  @override
+  String get noNetwork => 'Bu cihazda yerel ağ adresi bulunamadı; bunun yerine IP adresinin tamamını yaz.';
+  @override
+  String get hashtagHint => 'Diğer cihazın adresinin son sayısını yaz (Quick Send veya LocalSend bilgi ekranında görünür).';
+  @override
+  String get searching => 'Cihaz aranıyor…';
+  @override
+  String get notFound => 'Bu adreste yanıt veren Quick Send veya LocalSend cihazı yok. Ayrıntı için dokun.';
+}
+
+// Path: qsHistory
+class _Translations$qsHistory$tr extends Translations$qsHistory$en {
+  _Translations$qsHistory$tr._(TranslationsTr root) : this._root = root, super.internal(root);
+
+  final TranslationsTr _root; // ignore: unused_field
+
+  // Translations
+  @override
+  String get all => 'Tümü';
+  @override
+  String get images => 'Resimler';
+  @override
+  String get videos => 'Videolar';
+  @override
+  String get documents => 'Belgeler';
+  @override
+  String get messages => 'Mesajlar';
+  @override
+  String get other => 'Diğer';
+  @override
+  String get anyTime => 'Tüm zamanlar';
+  @override
+  String get today => 'Bugün';
+  @override
+  String get yesterday => 'Dün';
+  @override
+  String get last7 => 'Son 7 gün';
+  @override
+  String get last30 => 'Son 30 gün';
+  @override
+  String get pickRange => 'Tarih seç…';
+  @override
+  String get noMatch => 'Bu filtrelere uyan kayıt yok.';
+}
+
+// Path: qsWhatsNew
+class _Translations$qsWhatsNew$tr extends Translations$qsWhatsNew$en {
+  _Translations$qsWhatsNew$tr._(TranslationsTr root) : this._root = root, super.internal(root);
+
+  final TranslationsTr _root; // ignore: unused_field
+
+  // Translations
+  @override
+  String title({required Object version}) => 'Quick Send ${version} yenilikleri';
+  @override
+  String get internet => 'İnternet üzerinden: telefonların kolay okuduğu daha büyük QR kod; dosyalar ulaşınca paylaşım kendiliğinden durur.';
+  @override
+  String get qrPage => 'QR kod ve bağlantı sayfası Quick Send tasarımında; QR kod doğrudan sayfada.';
+  @override
+  String get manual => 'Adrese gönder: IP adresinin noktaları yazarken eklenir; # ve adresin son sayısı yeniden çalışıyor.';
+  @override
+  String get trusted => 'Güvenilir bir cihazın kimliği değiştiyse (örneğin Quick Send yeniden kurulduysa) tek dokunuşla yeniden güvenebilirsin.';
+  @override
+  String get history => 'Son etkinliklerde resim, video, belge, mesaj ve tarih filtreleri var.';
+  @override
+  String get avatar => 'Ayarlar\'dan profil fotoğrafı ekleyebilirsin (yalnızca bu cihazda görünür).';
+  @override
+  String get chooser => 'Dosya ve klasörler masaüstünün kendi dosya seçicisiyle (GNOME, KDE) seçilir; son klasör hatırlanır.';
+  @override
+  String get contextMenu => 'Dosyalar\'daki "Quick Send ile gönder" öğesi, ayarı değiştirdiğin anda görünür veya kaybolur.';
+  @override
+  String get window => 'Pencere 575 × 770 açılır; başlık çubuğu sistem temanı ve ikonlarını izler.';
 }
 
 // Path: qsTray

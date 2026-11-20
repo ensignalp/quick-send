@@ -135,7 +135,7 @@ export const previewBridge = {
   async getInitialSharedFiles() { return []; },
   async getVisibility() { return visibility; },
   async isReceiverEnabled() { return receiver; },
-  async getAppInfo() { return { version: '1.0.0', releasesRepo: '', alias: coreConfig.alias }; },
+  async getAppInfo() { return { version: '1.1.0', releasesRepo: '', alias: coreConfig.alias }; },
   async getSettings() { return storedSettings; },
   async setSettings(json: string) { storedSettings = json; return true; },
   async getCoreConfig() { return coreConfig; },

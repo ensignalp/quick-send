@@ -3,10 +3,11 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/pages/debug/debug_page.dart';
+import 'package:localsend_app/quick_send/qs_style.dart';
 import 'package:localsend_app/quick_send/update_check_button.dart';
 import 'package:localsend_app/util/i18n.dart';
 import 'package:localsend_app/widget/quick_send_logo.dart';
-import 'package:localsend_app/widget/responsive_list_view.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:routerino/routerino.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -18,171 +19,168 @@ part 'translators.dart';
 
 final _translatorWithGithubRegex = RegExp(r'(.+) \(@([\w\-_]+)\)');
 
+/// Quick Send repository (also where releases and the issue tracker are).
+const _quickSendRepo = 'https://github.com/ensignalp/quick-send';
+
 class AboutPage extends StatelessWidget {
   const AboutPage();
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).colorScheme.primary;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.aboutPage.title),
-      ),
-      body: ResponsiveListView(
-        padding: const EdgeInsets.symmetric(horizontal: 15),
+    final p = QsPalette(context);
+    final primaryColor = p.accent;
+    final body = TextStyle(color: p.sub, height: 1.45);
+    TextStyle heading() => TextStyle(fontWeight: FontWeight.w700, color: p.text);
+    Widget open(String url, {bool external = true}) => Icon(external ? Icons.open_in_new : Icons.chevron_right, size: 20, color: p.sub);
+
+    Widget creditTable(Map<String, List<String>> entries, String Function(String key) keyLabel) => Padding(
+      padding: const EdgeInsets.fromLTRB(18, 4, 18, 14),
+      child: Table(
+        columnWidths: const {0: IntrinsicColumnWidth(), 1: FlexColumnWidth()},
         children: [
-          const SizedBox(height: 20),
-          const QuickSendLogo(withText: true),
-          Text(
-            '© ${DateTime.now().year} Tien Do Nam',
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 10),
-          Center(
-            child: TextButton(
-              onPressed: () async {
-                await launchUrl(Uri.parse('https://localsend.org'));
-              },
-              child: Text(t.aboutPage.projectHomepage),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(t.aboutPage.description.join('\n\n')),
-          const SizedBox(height: 12),
-          Text(t.aboutPage.developer, style: const TextStyle(fontWeight: FontWeight.bold)),
-          const Text('Muhammed Alparslan Sancaktar · Ensignsoft'),
-          const SizedBox(height: 12),
-          Text(t.aboutPage.attribution),
-          const SizedBox(height: 20),
-          Text(t.aboutPage.author, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text.rich(
-            _buildContributor(
-              label: 'Tien Do Nam (@Tienisto)',
-              primaryColor: primaryColor,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(t.aboutPage.contributors, style: const TextStyle(fontWeight: FontWeight.bold)),
-          ..._contributors.map((contributor) {
-            return Text.rich(
-              _buildContributor(
-                label: contributor,
-                primaryColor: primaryColor,
-              ),
-            );
-          }),
-          const SizedBox(height: 20),
-          Text(t.aboutPage.packagers, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Table(
-            columnWidths: const {
-              0: IntrinsicColumnWidth(),
-              1: FlexColumnWidth(),
-            },
-            children: [
-              ..._packagers.entries.map(
-                (e) => TableRow(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 10),
-                      child: Text(e.key),
-                    ),
-                    Text.rich(
-                      TextSpan(
-                        children: e.value.mapIndexed(
-                          (index, translator) {
-                            return _buildContributor(
-                              label: translator,
-                              primaryColor: primaryColor,
-                              newLine: index != 0,
-                            );
-                          },
-                        ).toList(),
-                      ),
-                    ),
-                  ],
+          for (final e in entries.entries)
+            TableRow(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 12, bottom: 6),
+                  child: Text(keyLabel(e.key), style: TextStyle(color: p.text, fontSize: 13)),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(t.aboutPage.translators, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Table(
-            columnWidths: const {
-              0: IntrinsicColumnWidth(),
-              1: FlexColumnWidth(),
-            },
-            children: [
-              ..._translators.entries.map(
-                (e) => TableRow(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 10),
-                      child: Text(e.key.getLocaleName()),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text.rich(
+                    TextSpan(
+                      style: TextStyle(color: p.sub, fontSize: 13),
+                      children: e.value
+                          .mapIndexed((index, name) => _buildContributor(label: name, primaryColor: primaryColor, newLine: index != 0))
+                          .toList(),
                     ),
-                    Text.rich(
-                      TextSpan(
-                        children: e.value.mapIndexed(
-                          (index, translator) {
-                            return _buildContributor(
-                              label: translator,
-                              primaryColor: primaryColor,
-                              newLine: index != 0,
-                            );
-                          },
-                        ).toList(),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const UpdateCheckButton(),
-              TextButton(
-                onPressed: () async {
-                  await launchUrl(Uri.parse('https://localsend.org'));
-                },
-                child: Text(t.aboutPage.projectHomepage),
-              ),
-              TextButton(
-                onPressed: () async {
-                  await launchUrl(Uri.parse('https://github.com/localsend/localsend'), mode: LaunchMode.externalApplication);
-                },
-                child: Text(t.aboutPage.upstreamGithub),
-              ),
-              TextButton(
-                onPressed: () async {
-                  await launchUrl(Uri.parse('https://codeberg.org/localsend/localsend'), mode: LaunchMode.externalApplication);
-                },
-                child: Text(t.aboutPage.upstreamCodeberg),
-              ),
-              TextButton(
-                onPressed: () async {
-                  await launchUrl(Uri.parse('https://www.apache.org/licenses/LICENSE-2.0'));
-                },
-                child: Text(t.aboutPage.apacheLicense),
-              ),
-              TextButton(
-                onPressed: () async {
-                  await context.push(() => const LicensePage());
-                },
-                child: Text(t.aboutPage.licenseNotices),
-              ),
-              TextButton(
-                onPressed: () async {
-                  await context.push(() => const DebugPage());
-                },
-                child: Text(t.aboutPage.debugging),
-              ),
-            ],
-          ),
-          const SizedBox(height: 50),
+              ],
+            ),
         ],
       ),
+    );
+
+    return QsPage(
+      title: t.aboutPage.title,
+      children: [
+        const SizedBox(height: 8),
+        const QuickSendLogo(withText: true),
+        const SizedBox(height: 6),
+        FutureBuilder<PackageInfo>(
+          future: PackageInfo.fromPlatform(),
+          builder: (context, snapshot) => Text(
+            snapshot.hasData ? 'v${snapshot.data!.version}' : '',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: p.sub),
+          ),
+        ),
+        const SizedBox(height: 14),
+        QsGroup(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(t.aboutPage.description.join('\n\n'), style: body),
+                  const SizedBox(height: 12),
+                  Text(t.aboutPage.developer, style: heading()),
+                  Text('Muhammed Alparslan Sancaktar · Ensignsoft', style: body),
+                  const SizedBox(height: 12),
+                  Text(t.aboutPage.attribution, style: body),
+                ],
+              ),
+            ),
+          ],
+        ),
+        QsGroup(
+          children: [
+            const UpdateCheckButton(),
+            QsRow(
+              title: 'Quick Send · GitHub',
+              hint: _quickSendRepo.replaceFirst('https://', ''),
+              trailing: open(_quickSendRepo),
+              onTap: () async => launchUrl(Uri.parse(_quickSendRepo), mode: LaunchMode.externalApplication),
+            ),
+            QsRow(
+              title: t.aboutPage.projectHomepage,
+              hint: 'localsend.org',
+              trailing: open('https://localsend.org'),
+              onTap: () async => launchUrl(Uri.parse('https://localsend.org')),
+            ),
+            QsRow(
+              title: t.aboutPage.upstreamGithub,
+              trailing: open('https://github.com/localsend/localsend'),
+              onTap: () async => launchUrl(Uri.parse('https://github.com/localsend/localsend'), mode: LaunchMode.externalApplication),
+            ),
+            QsRow(
+              title: t.aboutPage.upstreamCodeberg,
+              trailing: open('https://codeberg.org/localsend/localsend'),
+              onTap: () async => launchUrl(Uri.parse('https://codeberg.org/localsend/localsend'), mode: LaunchMode.externalApplication),
+            ),
+          ],
+        ),
+        QsGroup(
+          children: [
+            QsRow(
+              title: t.aboutPage.apacheLicense,
+              trailing: open('https://www.apache.org/licenses/LICENSE-2.0'),
+              onTap: () async => launchUrl(Uri.parse('https://www.apache.org/licenses/LICENSE-2.0')),
+            ),
+            QsRow(
+              title: t.aboutPage.licenseNotices,
+              trailing: open('', external: false),
+              onTap: () async => context.push(() => const LicensePage()),
+            ),
+            QsRow(
+              title: t.aboutPage.debugging,
+              trailing: open('', external: false),
+              onTap: () async => context.push(() => const DebugPage()),
+            ),
+          ],
+        ),
+        QsGroup(
+          title: t.aboutPage.author,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 6),
+              child: Text.rich(
+                TextSpan(
+                  style: TextStyle(color: p.sub),
+                  children: [
+                    TextSpan(text: '© ${DateTime.now().year} '),
+                    _buildContributor(label: 'Tien Do Nam (@Tienisto)', primaryColor: primaryColor),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 8, 18, 4),
+              child: Text(t.aboutPage.contributors, style: heading()),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+              child: Text.rich(
+                TextSpan(
+                  style: TextStyle(color: p.sub, fontSize: 13),
+                  children: _contributors
+                      .mapIndexed((index, c) => _buildContributor(label: c, primaryColor: primaryColor, newLine: index != 0))
+                      .toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
+        QsGroup(title: t.aboutPage.packagers, children: [creditTable(_packagers, (k) => k)]),
+        QsGroup(
+          title: t.aboutPage.translators,
+          children: [
+            creditTable({for (final e in _translators.entries) e.key.languageTag: e.value}, (k) => AppLocaleUtils.parse(k).getLocaleName()),
+          ],
+        ),
+      ],
     );
   }
 }

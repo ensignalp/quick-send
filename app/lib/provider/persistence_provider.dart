@@ -62,8 +62,8 @@ const _favorites = 'ls_favorites';
 // App Window Offset and Size info
 const _windowOffsetX = 'ls_window_offset_x';
 const _windowOffsetY = 'ls_window_offset_y';
-const _windowWidth = 'qs_window_width'; // Quick Send: new keys so the 900×500 default replaces sizes saved by older builds.
-const _windowHeight = 'qs_window_height';
+const _windowWidth = 'qs_window_width_v2'; // Quick Send: renamed so the 575×770 default (1.1.0) replaces sizes saved by older builds.
+const _windowHeight = 'qs_window_height_v2';
 const _saveWindowPlacement = 'ls_save_window_placement';
 const _alwaysOnTop = 'ls_always_on_top';
 
@@ -89,6 +89,7 @@ const _minimizeToTray = 'ls_minimize_to_tray';
 const _trustedOnly = 'qs_trusted_only'; // Quick Send (legacy): accept requests only from trusted (favorite) devices
 const _shareMode = 'qs_share_mode'; // Quick Send: who can share when the Receive screen is closed: off | trusted | everyone
 const _autoStartOffered = 'qs_autostart_offered'; // Quick Send: "start at login?" was asked once (Linux)
+const _contextMenuMarkerMigrated = 'qs_context_menu_marker_migrated'; // Quick Send 1.1.0 (see migrateLinuxContextMenuMarker)
 const _autoUpdate = 'qs_auto_update'; // Quick Send: background updates (Linux AppImage), on by default
 const _contextMenuOffered = 'qs_context_menu_offered'; // Quick Send: file manager integration was set up once
 const _https = 'ls_https';
@@ -519,6 +520,10 @@ class PersistenceService {
   }
 
   bool isQsAutoUpdate() => _prefs.getBool(_autoUpdate) ?? true;
+
+  bool isQsContextMenuMarkerMigrated() => _prefs.getBool(_contextMenuMarkerMigrated) ?? false;
+
+  Future<void> setQsContextMenuMarkerMigrated() async => _prefs.setBool(_contextMenuMarkerMigrated, true);
 
   bool isQsAutoStartOffered() => _prefs.getBool(_autoStartOffered) ?? false;
 

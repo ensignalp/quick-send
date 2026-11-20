@@ -189,7 +189,8 @@ async fn send_inner(store: &FsStore, files: Vec<SendFile>, on_event: EventFn, ca
 /// Downloads the files of [ticket] into [dest_dir]. Emits `connecting`, `progress {done, total}`,
 /// `received {files: [path…], size}`. Returns the saved paths. Cancel with [cancel].
 pub async fn receive(ticket: &str, dest_dir: PathBuf, data_dir: PathBuf, on_event: EventFn, cancel: CancellationToken) -> Result<Vec<PathBuf>> {
-    let ticket = BlobTicket::from_str(ticket.trim()).map_err(|_| anyhow!("invalid code"))?;
+    // Codes are base32; QR codes carry them upper-case (smaller alphanumeric mode), so case is ignored.
+    let ticket = BlobTicket::from_str(&ticket.trim().to_ascii_lowercase()).map_err(|_| anyhow!("invalid code"))?;
     if ticket.format() != BlobFormat::HashSeq {
         bail!("this code is not a Quick Send / sendme collection");
     }
@@ -293,7 +294,7 @@ fn tracing_log(message: &str) {
 
 /// True when [text] parses as a collection ticket (used to validate pasted codes).
 pub fn is_valid_ticket(text: &str) -> bool {
-    BlobTicket::from_str(text.trim()).map(|t| t.format() == BlobFormat::HashSeq).unwrap_or(false)
+    BlobTicket::from_str(&text.trim().to_ascii_lowercase()).map(|t| t.format() == BlobFormat::HashSeq).unwrap_or(false)
 }
 
 #[cfg(test)]
@@ -343,6 +344,7 @@ mod tests {
             let v = rx.recv().await.context("sender stopped")?;
             if v["type"] == "ticket" { break v["ticket"].as_str().unwrap().to_string(); }
         };
+        assert!(is_valid_ticket(&ticket.to_ascii_uppercase()), "upper-case (QR) codes are accepted");
         let saved = receive(&ticket, dir.join("out"), dir.join("recv-store"), Arc::new(|_| {}), CancellationToken::new()).await?;
         assert_eq!(saved.len(), 2);
         assert_eq!(std::fs::read(dir.join("out/a.txt"))?, b"hello over iroh");

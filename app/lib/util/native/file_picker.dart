@@ -10,6 +10,7 @@ import 'package:localsend_app/model/cross_file.dart';
 import 'package:localsend_app/pages/apk_picker_page.dart';
 import 'package:localsend_app/provider/device_info_provider.dart';
 import 'package:localsend_app/provider/selection/selected_sending_files_provider.dart';
+import 'package:localsend_app/quick_send/portal_file_chooser.dart';
 import 'package:localsend_app/util/determine_image_type.dart';
 import 'package:localsend_app/util/image_converter.dart';
 import 'package:localsend_app/util/native/channel/android_channel.dart' as android_channel;
@@ -167,7 +168,9 @@ Future<void> _pickFiles(BuildContext context, Ref ref) async {
             );
       }
     } else {
-      final result = await openFiles();
+      // Quick Send (Linux): the desktop's own chooser through the portal; falls back when it is missing.
+      final portal = defaultTargetPlatform == TargetPlatform.linux ? await PortalFileChooser.open(title: t.sendTab.picker.file) : null;
+      final result = portal != null ? portal.map((path) => XFile(path)).toList() : await openFiles();
       await ref
           .redux(selectedSendingFilesProvider)
           .dispatchAsync(

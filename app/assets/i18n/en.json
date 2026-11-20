@@ -304,7 +304,7 @@
   "aboutPage": {
     "title": "About Quick Send",
     "description": [
-      "Quick Send is a free, open-source app for securely sharing files and messages with nearby devices over your local network, without an internet connection.",
+      "Quick Send is a free, open-source app for securely sharing files and messages with nearby devices over your local network, without an internet connection, and with devices on other networks over the internet when you choose to.",
       "Quick Send is currently available on Android and Linux."
     ],
     "author": "LocalSend author",
@@ -593,6 +593,8 @@
     "sUnitAssetCountLabel": "count"
   },
   "shareHome": {
+    "trustAndAccept": "Trust and accept",
+    "identityChanged": "This is not the {name} you trust: its identity changed (for example, Quick Send was reinstalled on it). Trust it again if it is your device.",
     "sentTo": "Sent to {name}",
     "received": "Received",
     "receivedFrom": "Received from {name}",
@@ -658,6 +660,10 @@
     "searchingNetworks": "Checking the other networks…"
   },
   "qsSettings": {
+    "profilePhoto": "Profile photo",
+    "profilePhotoDesc": "Shown on this device only",
+    "profilePhotoChange": "Change photo",
+    "profilePhotoRemove": "Remove photo",
     "autostartOfferTitle": "Start Quick Send at login?",
     "autostartOfferBody": "Quick Send then waits in the system tray after you sign in, so nearby and trusted devices can send you files without opening the app. You can change this in Settings › Desktop.",
     "autostartOfferYes": "Start at login",
@@ -707,6 +713,7 @@
     "contextMenu": "Show in the file manager",
     "contextMenuDesc": "Adds “Send with Quick Send” to the right-click menu of Files (Nautilus) and Dolphin",
     "contextMenuLabel": "Send with Quick Send",
+    "contextMenuRestartHint": "Close Files once (or log out and in) so it picks up the new menu item.",
     "remove": "Remove",
     "secNearby": "Nearby sharing",
     "whoCanShare": "Who can share with you",
@@ -732,6 +739,7 @@
     "autoFinishDesc": "Close the transfer screen when it is done"
   },
   "qsInternet": {
+    "sentStopped": "The files were downloaded. Sharing stopped, the code no longer works.",
     "title": "Over the internet",
     "menu": "Over the internet",
     "intro": "For devices on different networks (mobile data, another Wi-Fi). Files go directly between the devices when possible, otherwise through an encrypted relay. Anyone with the code can download while sharing is on.",
@@ -751,6 +759,39 @@
     "connecting": "Connecting to the sender…",
     "openFolder": "Open folder",
     "failed": "The transfer did not complete. Try again; it resumes where it stopped."
+  },
+  "qsManual": {
+    "noNetwork": "No local network address was found on this device; enter the full IP address instead.",
+    "hashtagHint": "Enter the last number of the other device's address (shown in its Quick Send or LocalSend info).",
+    "searching": "Looking for the device…",
+    "notFound": "No Quick Send or LocalSend device answered at this address. Tap for details."
+  },
+  "qsHistory": {
+    "all": "All",
+    "images": "Images",
+    "videos": "Videos",
+    "documents": "Documents",
+    "messages": "Messages",
+    "other": "Other",
+    "anyTime": "Any time",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "last7": "Last 7 days",
+    "last30": "Last 30 days",
+    "pickRange": "Pick dates…",
+    "noMatch": "Nothing matches these filters."
+  },
+  "qsWhatsNew": {
+    "title": "What's new in Quick Send {version}",
+    "internet": "Over the internet: a larger QR code that phones read easily, and sharing stops by itself once the files arrive.",
+    "qrPage": "The QR code and link page has the Quick Send design, with the QR code right on the page.",
+    "manual": "Send to an address: the dots of an IP address appear as you type, and # with the last number of the address works again.",
+    "trusted": "If a trusted device's identity changed (for example after reinstalling Quick Send), you can trust it again with one tap.",
+    "history": "Recent activity has filters for images, videos, documents, messages and dates.",
+    "avatar": "Set a profile photo in Settings (shown on this device only).",
+    "chooser": "Files and folders are picked with your desktop's own file chooser (GNOME, KDE), which remembers the last folder.",
+    "contextMenu": "\"Send with Quick Send\" in Files now appears and disappears right when you change the setting.",
+    "window": "The window opens at 575 × 770 and its title bar follows your system theme and icons."
   },
   "qsTray": {
     "open": "Open Quick Send",

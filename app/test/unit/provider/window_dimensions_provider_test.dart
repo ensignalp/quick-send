@@ -39,7 +39,7 @@ void main() {
     });
     messenger.setMockMethodCallHandler(windowChannel, (call) async {
       windowCalls.add(call);
-      if (call.method == 'getBounds') return {'x': 0.0, 'y': 0.0, 'width': 900.0, 'height': 500.0};
+      if (call.method == 'getBounds') return {'x': 0.0, 'y': 0.0, 'width': 575.0, 'height': 770.0};
       return null;
     });
     messenger.setMockMethodCallHandler(screenChannel, (call) async {
@@ -98,10 +98,10 @@ void main() {
       'getCursorScreenPoint',
     ]);
     expect(windowCalls.map((call) => call.method), ['setMinimumSize', 'setBounds', 'getBounds', 'setBounds']);
-    expect((windowCalls[1].arguments as Map)['width'], 900.0);
-    expect((windowCalls[1].arguments as Map)['height'], 500.0);
-    expect((windowCalls[3].arguments as Map)['x'], 270.0);
-    expect((windowCalls[3].arguments as Map)['y'], 200.0);
+    expect((windowCalls[1].arguments as Map)['width'], 575.0);
+    expect((windowCalls[1].arguments as Map)['height'], 770.0);
+    expect((windowCalls[3].arguments as Map)['x'], 432.5);
+    expect((windowCalls[3].arguments as Map)['y'], 65.0);
     expect(nativeCalls.map((call) => call.method), ['restoreWindowFrame', 'configureWindowFrameAutosave']);
   });
 

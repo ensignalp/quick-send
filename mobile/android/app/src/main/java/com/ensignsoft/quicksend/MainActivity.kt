@@ -19,14 +19,15 @@ class MainActivity : ReactActivity() {
     ReactActivityDelegateWrapper(this, BuildConfig.IS_NEW_ARCHITECTURE_ENABLED, DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled))
 
   override fun onCreate(savedInstanceState: android.os.Bundle?) {
-    QuickSendShare.capture(intent)
+    QuickSendShare.capture(intent, this)
     super.onCreate(savedInstanceState)
   }
 
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
     setIntent(intent)
-    QuickSendShare.capture(intent)
+    QuickSendShare.capture(intent, this)
+    val target = QuickSendShare.consumeTarget()
     val files = QuickSendFiles.fromIntent(this, intent)
     val json = JSONArray()
     files.forEach { file -> json.put(JSONObject().apply {
@@ -36,6 +37,8 @@ class MainActivity : ReactActivity() {
       put("mimeType", file.mimeType)
       put("size", file.size)
     }) }
-    QuickSendEventBus.emit(JSONObject().put("type", "sharedFiles").put("files", json).toString())
+    val event = JSONObject().put("type", "sharedFiles").put("files", json)
+    target?.let { event.put("target", JSONObject(it)) } // picked in the share sheet: send straight to it
+    QuickSendEventBus.emit(event.toString())
   }
 }

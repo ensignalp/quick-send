@@ -10,7 +10,7 @@ REPO=$(cd "$(dirname "$0")/../../.." && pwd)
 FLUTTER_VERSION=$(sed -n 's/.*"flutter": *"\([^"]*\)".*/\1/p' "$REPO/.fvmrc")
 SDK="$HOME/fvm/versions/$FLUTTER_VERSION"
 PODMAN="podman"
-if [ -n "${PODMAN_ROOT:-}" ]; then PODMAN="podman --root $PODMAN_ROOT/root --runroot $PODMAN_ROOT/run"; fi
+if [ -n "${PODMAN_ROOT:-}" ]; then PODMAN="podman --root $PODMAN_ROOT/root --runroot ${PODMAN_RUNROOT:-$PODMAN_ROOT/run}"; fi
 
 $PODMAN image exists qs-linux-build || $PODMAN build -t qs-linux-build -f "$REPO/support/build/linux/Containerfile" "$REPO/support/build/linux"
 

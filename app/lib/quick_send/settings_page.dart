@@ -20,6 +20,7 @@ import 'package:localsend_app/provider/network/server/server_provider.dart';
 import 'package:localsend_app/provider/persistence_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
 import 'package:localsend_app/quick_send/auto_update.dart';
+import 'package:localsend_app/quick_send/avatar.dart';
 import 'package:localsend_app/quick_send/qs_style.dart';
 import 'package:localsend_app/quick_send/trusted_only.dart';
 import 'package:localsend_app/util/i18n.dart';
@@ -27,6 +28,7 @@ import 'package:localsend_app/util/native/context_menu_helper.dart';
 import 'package:localsend_app/util/native/device_info_helper.dart';
 import 'package:localsend_app/util/native/pick_directory_path.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
+import 'package:localsend_app/util/ui/snackbar.dart';
 import 'package:refena_flutter/refena_flutter.dart';
 import 'package:routerino/routerino.dart';
 
@@ -154,6 +156,35 @@ class _QsSettingsPageState extends State<QsSettingsPage> with Refena {
                     value: settings.alias,
                     trailing: Icon(Icons.edit_outlined, size: 20, color: p.sub),
                     onTap: () async => _editName(settings.alias),
+                  ),
+                  Builder(
+                    builder: (rowContext) => QsRow(
+                      title: s.profilePhoto,
+                      hint: s.profilePhotoDesc,
+                      trailing: QsSelfAvatar(size: 36, fallback: Icon(Icons.add_a_photo_outlined, size: 22, color: p.sub)),
+                      onTap: () async {
+                        final avatar = ref.notifier(qsAvatarProvider);
+                        if (ref.read(qsAvatarProvider) == null) {
+                          await avatar.choose();
+                          return;
+                        }
+                        final box = rowContext.findRenderObject()! as RenderBox;
+                        final origin = box.localToGlobal(Offset(box.size.width - 40, box.size.height - 6));
+                        final action = await showMenu<String>(
+                          context: rowContext,
+                          color: p.card,
+                          shape: qsMenuShape(p),
+                          popUpAnimationStyle: qsMenuAnimation,
+                          position: RelativeRect.fromLTRB(origin.dx, origin.dy, origin.dx + 1, origin.dy + 1),
+                          items: [
+                            qsMenuItem(p, 'change', Icons.photo_library_outlined, s.profilePhotoChange),
+                            qsMenuItem(p, 'remove', Icons.delete_outline, s.profilePhotoRemove, color: p.danger),
+                          ],
+                        );
+                        if (action == 'change') await avatar.choose();
+                        if (action == 'remove') await avatar.remove();
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -286,6 +317,10 @@ class _QsSettingsPageState extends State<QsSettingsPage> with Refena {
                         onChanged: (v) async {
                           final ok = v ? await enableContextMenu(label: s.contextMenuLabel) : await disableContextMenu();
                           if (ok && mounted) setState(() => _contextMenu = v);
+                          // nautilus-python loads a newly installed extension only when Nautilus starts.
+                          if (ok && v && contextMenuNeedsFileManagerRestart && context.mounted) {
+                            context.showSnackBar(s.contextMenuRestartHint);
+                          }
                         },
                       ),
                   ],

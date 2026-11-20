@@ -96,6 +96,9 @@ class QuickSendModule(private val context: ReactApplicationContext) : ReactConte
       putString("version", BuildConfig.VERSION_NAME)
       putString("releasesRepo", BuildConfig.RELEASES_REPO)
       putString("alias", QuickSendCoreHost.alias(context))
+      // Installed over an earlier version (not a fresh install): lets "What's new" appear after updates.
+      val pkg = runCatching { context.packageManager.getPackageInfo(context.packageName, 0) }.getOrNull()
+      putBoolean("updated", pkg != null && pkg.firstInstallTime != pkg.lastUpdateTime)
     })
   }
 
@@ -167,6 +170,14 @@ class QuickSendModule(private val context: ReactApplicationContext) : ReactConte
     promise.resolve(if (QuickSendCoreHost.visibility(context)) "everyone" else "off")
   }
 
+  /** Manual sending: probes host:port (LocalSend register); resolves to the request id of the "probeResult" event. */
+  @ReactMethod fun probe(host: String, port: Int, promise: Promise) {
+    val id = UUID.randomUUID().toString()
+    runCatching { com.ensignsoft.quicksend.core.NativeQuickSend.probe(id, host, port) }
+      .onSuccess { promise.resolve(id) }
+      .onFailure { promise.reject("probe", it.message, it) }
+  }
+
   /** Internet transfer (iroh): shares the given files; resolves to the transfer id. Events: type "internet". */
   @ReactMethod fun internetSend(files: ReadableArray, promise: Promise) {
     val id = UUID.randomUUID().toString()
@@ -231,6 +242,11 @@ class QuickSendModule(private val context: ReactApplicationContext) : ReactConte
   @ReactMethod fun isReceiverEnabled(promise: Promise) {
     promise.resolve(context.getSharedPreferences(QuickSendService.PREFS, android.content.Context.MODE_PRIVATE)
       .getBoolean(QuickSendService.RECEIVER_ENABLED, false))
+  }
+
+  /** Device picked in the share sheet for the share that started the app (Direct Share), or null. */
+  @ReactMethod fun getInitialShareTarget(promise: Promise) {
+    promise.resolve(com.ensignsoft.quicksend.core.QuickSendShare.consumeTarget())
   }
 
   @ReactMethod fun getInitialSharedFiles(promise: Promise) {

@@ -94,6 +94,14 @@ object QuickSendCoreHost : QuickSendCoreCallbacks {
       return
     }
     when (event.optString("type")) {
+      // Nearby devices for the share sheet (Direct Share).
+      "devices" -> if (context != null) {
+        val list = event.optJSONArray("devices")
+        QuickSendDirectShare.replaceAll(context, (0 until (list?.length() ?: 0)).mapNotNull { list?.optJSONObject(it) })
+      }
+      "device" -> if (context != null) event.optJSONObject("device")?.let { QuickSendDirectShare.add(context, it) }
+      // A device found by address (manual sending) is offered in the share sheet too.
+      "probeResult" -> if (context != null) event.optJSONObject("device")?.let { QuickSendDirectShare.add(context, it) }
       "transferRequest" -> if (context != null) {
         val transfer = event.optJSONObject("transfer")
         val sessionId = transfer?.optString("sessionId").orEmpty()

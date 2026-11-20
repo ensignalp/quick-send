@@ -8,7 +8,7 @@
 %global __requires_exclude ^(libflutter_linux_gtk|libapp|librust_lib_localsend_app|libdartjni|lib.*_plugin|libjvm)\\.so.*$
 
 Name:           quicksend
-Version:        %{?qs_version}%{!?qs_version:1.0.0}
+Version:        %{?qs_version}%{!?qs_version:1.1.0}
 Release:        1%{?dist}
 Summary:        Share files securely over your local network
 License:        Apache-2.0
@@ -72,6 +72,10 @@ fi
 %{_prefix}/lib/firewalld/services/quicksend.xml
 
 %changelog
+* Fri Nov 20 2026 Muhammed Alparslan Sancaktar <codealpx@gmail.com> - 1.1.0-1
+- Quick Send 1.1.0: system title bar, portal file chooser, profile photo, manual sending
+  with automatic dots, recent activity filters, What's new page
+
 * Wed Nov 11 2026 Muhammed Alparslan Sancaktar <codealpx@gmail.com> - 1.0.0-1
 - Quick Send 1.0.0: phone-style desktop layout, GNOME title bar, trusted auto-accept
   in the background, signed background updates

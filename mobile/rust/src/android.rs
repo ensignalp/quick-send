@@ -874,3 +874,66 @@ pub extern "system" fn Java_com_ensignsoft_quicksend_core_NativeQuickSend_initAn
         java_throw(&mut env, error);
     }
 }
+
+/// Quick Send: manual sending (IP address or "#" hashtag). Asks the device at host:port who it is with a
+/// LocalSend v2 register request and emits {"type":"probeResult","requestId",…,"device"|"error"}. The device
+/// object has the shape `send` expects (alias, fingerprint, host, port, protocol). The fingerprint is the one
+/// of the TLS certificate that answered (HTTPS), so later sends are pinned to it.
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_ensignsoft_quicksend_core_NativeQuickSend_probe(
+    mut env: JNIEnv<'_>,
+    _class: JClass<'_>,
+    request_id: JString<'_>,
+    host: JString<'_>,
+    port: jni::sys::jint,
+) {
+    let result = (|| -> Result<()> {
+        let request_id = java_string(&mut env, request_id)?;
+        let host = java_string(&mut env, host)?;
+        let port = u16::try_from(port).map_err(|_| anyhow!("invalid port"))?;
+        let engine = current_engine().ok_or_else(|| anyhow!("Network core has not started"))?;
+        runtime().spawn(async move {
+            let identity = engine.identity.clone();
+            let probe = async {
+                let client = LsHttpClientV2::try_new(&identity.private_key_pem, &identity.certificate_pem, None, Some(Duration::from_secs(4)))?;
+                let payload = RegisterDtoV2 {
+                    alias: engine.alias.clone(),
+                    version: PROTOCOL_VERSION_V2.to_string(),
+                    device_model: None,
+                    device_type: Some(DeviceType::Mobile),
+                    fingerprint: identity.fingerprint.clone(),
+                    port: HTTP_PORT,
+                    protocol: ProtocolType::Https,
+                    download: false,
+                };
+                // Quick Send and LocalSend use HTTPS by default; fall back to HTTP for devices with encryption off.
+                let (protocol, result) = match client.register(ProtocolType::Https, &host, port, payload.clone()).await {
+                    Ok(r) => (ProtocolType::Https, r),
+                    Err(https_error) => match client.register(ProtocolType::Http, &host, port, payload).await {
+                        Ok(r) => (ProtocolType::Http, r),
+                        Err(_) => return Err(anyhow!(https_error.to_string())),
+                    },
+                };
+                let body = result.body;
+                let fingerprint = result.cert_fingerprint.unwrap_or(body.fingerprint);
+                Ok::<Value, anyhow::Error>(json!({
+                    "alias": body.alias,
+                    "fingerprint": fingerprint,
+                    "host": host,
+                    "port": port,
+                    "protocol": protocol.as_str(),
+                    "deviceModel": body.device_model,
+                    "deviceType": body.device_type,
+                }))
+            };
+            match probe.await {
+                Ok(device) => emit(&engine, json!({"type":"probeResult","requestId":request_id,"device":device})),
+                Err(error) => emit(&engine, json!({"type":"probeResult","requestId":request_id,"error":error.to_string()})),
+            }
+        });
+        Ok(())
+    })();
+    if let Err(error) = result {
+        java_throw(&mut env, error);
+    }
+}

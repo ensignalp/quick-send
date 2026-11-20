@@ -3,7 +3,7 @@ description: Quick Send transfers files and messages securely over your local ne
 publish_to: "none"
 resolution: workspace
 
-version: 1.0.0+2
+version: 1.1.0+3
 
 environment:
   flutter: ^3.41.0
@@ -14,6 +14,7 @@ dependencies:
   connectivity_plus: 7.3.1
   crypto: 3.0.7
   dart_mappable: 4.8.0
+  dbus: 0.7.13 # Quick Send: xdg-desktop-portal file chooser on Linux
   desktop_drop: 0.7.1
   device_apps: 2.2.0
   device_info_plus: 12.4.0

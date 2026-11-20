@@ -33,3 +33,21 @@ test('parses stored settings over defaults and drops bad values', () => {
   expect(s.animations).toBe(true);
   expect(s.trusted).toEqual([{ fingerprint: 'A', alias: 'Pc' }]);
 });
+
+import { dayStart, kindOf, kindsOf } from '../src/transfers';
+
+test('file kinds come from the MIME type', () => {
+  expect(kindOf('image/jpeg')).toBe('image');
+  expect(kindOf('video/mp4')).toBe('video');
+  expect(kindOf('application/pdf')).toBe('document');
+  expect(kindOf('application/vnd.openxmlformats-officedocument.wordprocessingml.document')).toBe('document');
+  expect(kindOf('audio/mpeg')).toBe('audio');
+  expect(kindOf('application/zip')).toBe('other');
+  expect(kindOf(undefined)).toBe('other');
+  expect(kindsOf([{ mimeType: 'image/png' }, { mimeType: 'image/jpeg' }, { mimeType: 'text/plain' }])).toEqual(['image', 'document']);
+});
+
+test('dayStart is local midnight', () => {
+  const t = new Date(2026, 10, 19, 15, 30).getTime();
+  expect(dayStart(t)).toBe(new Date(2026, 10, 19).getTime());
+});

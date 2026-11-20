@@ -1,15 +1,14 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:localsend_app/config/theme.dart';
 import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/provider/device_info_provider.dart';
 import 'package:localsend_app/provider/http_provider.dart';
 import 'package:localsend_app/provider/last_devices.provider.dart';
 import 'package:localsend_app/provider/local_ip_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
+import 'package:localsend_app/quick_send/ip_input_formatter.dart';
 import 'package:localsend_app/quick_send/qs_style.dart';
 import 'package:localsend_app/util/device_type_ext.dart';
 import 'package:localsend_app/widget/dialogs/error_dialog.dart';
@@ -62,6 +61,12 @@ class _AddressInputDialogState extends State<AddressInputDialog> with Refena {
     } else {
       final networks = _network == _allNetworks ? localIps : localIps.where((ip) => ip.ipPrefix == _network);
       candidates = networks.map((ip) => '${ip.ipPrefix}.$input').toList();
+    }
+
+    // Quick Send: with no local IPv4 network found, "#" has nothing to try on; say so instead of doing nothing.
+    if (candidates.isEmpty) {
+      setState(() => _error = t.qsManual.noNetwork);
+      return;
     }
 
     setState(() {
@@ -142,129 +147,140 @@ class _AddressInputDialogState extends State<AddressInputDialog> with Refena {
     final localIps = (ref.watch(localIpProvider.select((info) => info.localIps))).uniqueIpPrefix;
     final settings = ref.watch(settingsProvider);
     final lastDevices = ref.watch(lastDevicesProvider);
+    final p = QsPalette(context);
+    final hint = TextStyle(color: p.sub, fontSize: 13, height: 1.4);
+    final prefix = localIps.firstOrNull?.ipPrefix ?? '192.168.1';
+    final canSubmit = !_fetching && (_mode == _InputMode.hashtag ? _input.isNotEmpty : isCompleteIpv4(_input.trim()));
 
+    // Quick Send design; behaviour as in LocalSend: "#" + the last part of an address is tried on this
+    // device's own networks (192.168.1.# …), or a full IP address is entered.
     return AlertDialog(
-      title: Text(t.dialogs.addressInput.title),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ToggleButtons(
-            isSelected: _selected,
-            onPressed: (int index) {
-              setState(() {
+      backgroundColor: p.card,
+      shape: qsDialogShape(p),
+      title: Text(
+        t.dialogs.addressInput.title,
+        style: TextStyle(fontWeight: FontWeight.w700, color: p.text),
+      ),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 320, maxWidth: 420),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            QsSegmented<_InputMode>(
+              value: _mode,
+              options: [for (final m in _InputMode.values) (m, m.label)],
+              onChanged: (m) => setState(() {
                 for (int i = 0; i < _selected.length; i++) {
-                  _selected[i] = i == index;
+                  _selected[i] = _InputMode.values[i] == m;
                 }
-                _mode = _InputMode.values[index];
-              });
-            },
-            borderRadius: BorderRadius.circular(10),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            constraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-            children: _InputMode.values.map((mode) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                child: Text(mode.label),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 15),
-          TextFormField(
-            key: ValueKey('input-$_mode'),
-            autofocus: true,
-            enabled: !_fetching,
-            keyboardType: _mode == _InputMode.hashtag ? TextInputType.number : TextInputType.text,
-            decoration: InputDecoration(
-              prefixText: _mode == _InputMode.hashtag ? '# ' : 'IP: ',
+                _mode = m;
+                _input = '';
+                _error = null;
+              }),
             ),
-            onChanged: (s) {
-              setState(() => _input = s);
-            },
-            onFieldSubmitted: (s) async => _submit(localIps, settings.port),
-          ),
-          const SizedBox(height: 10),
-          if (_mode == _InputMode.hashtag) ...[
-            Text(
-              '${t.general.example}: 123',
-              style: const TextStyle(color: Colors.grey),
-            ),
-            if (localIps.length <= 1)
-              Text(
-                '${t.dialogs.addressInput.ip}: ${localIps.firstOrNull?.ipPrefix ?? '192.168.2'}.$_input',
-                style: const TextStyle(color: Colors.grey),
-              )
-            else ...[
-              // Quick Send: several local networks; the user picks which one(s) the number is tried on.
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Text('${t.shareHome.network}: ', style: const TextStyle(color: Colors.grey)),
-                  Flexible(
-                    child: QsDropdown<String>(
-                      value: localIps.any((ip) => ip.ipPrefix == _network) ? _network : _allNetworks,
-                      options: [
-                        (_allNetworks, t.qsSettings.allNetworks),
-                        for (final ip in localIps) (ip.ipPrefix, '${ip.ipPrefix}.${_input.isEmpty ? '…' : _input}'),
-                      ],
-                      onChanged: (network) => setState(() => _network = network),
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 16),
+            TextFormField(
+              key: ValueKey('input-$_mode'),
+              autofocus: true,
+              enabled: !_fetching,
+              keyboardType: TextInputType.number,
+              inputFormatters: [if (_mode == _InputMode.hashtag) HashtagInputFormatter() else Ipv4InputFormatter()],
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: p.text, letterSpacing: 0.5),
+              decoration: InputDecoration(
+                prefixText: _mode == _InputMode.hashtag ? '# ' : null,
+                hintText: _mode == _InputMode.hashtag ? '123' : '$prefix.123',
               ),
-            ],
-          ] else ...[
-            if (lastDevices.isEmpty)
-              Text(
-                '${t.general.example}: ${localIps.firstOrNull?.ipPrefix ?? '192.168.2'}.123',
-                style: const TextStyle(color: Colors.grey),
-              )
-            else
-              Text.rich(
-                TextSpan(
+              onChanged: (s) => setState(() {
+                _input = s;
+                _error = null;
+              }),
+              onFieldSubmitted: (s) async {
+                if (canSubmit || (_mode == _InputMode.ip && isCompleteIpv4(s.trim()))) await _submit(localIps, settings.port);
+              },
+            ),
+            const SizedBox(height: 10),
+            if (_mode == _InputMode.hashtag) ...[
+              if (localIps.isEmpty)
+                Text(t.qsManual.noNetwork, style: hint)
+              else if (localIps.length == 1)
+                Text('${t.dialogs.addressInput.ip}: $prefix.${_input.isEmpty ? '…' : _input}', style: hint)
+              else
+                // Quick Send: several local networks; the user picks which one(s) the number is tried on.
+                Row(
                   children: [
-                    TextSpan(text: t.dialogs.addressInput.recentlyUsed),
-                    ...lastDevices
-                        .mapIndexed((index, device) {
-                          return [
-                            if (index != 0) const TextSpan(text: ', '),
-                            TextSpan(
-                              text: device.ip,
-                              style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                              recognizer: TapGestureRecognizer()..onTap = () async => _submit(localIps, settings.port, device.ip),
-                            ),
-                          ];
-                        })
-                        .expand((e) => e),
-                  ],
-                ),
-              ),
-          ],
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 10),
-              child: Row(
-                children: [
-                  Text(t.general.error, style: TextStyle(color: Theme.of(context).colorScheme.warning)),
-                  if (_error != null) ...[
-                    const SizedBox(width: 5),
-                    InkWell(
-                      onTap: () async {
-                        await showDialog(
-                          context: context,
-                          builder: (_) => ErrorDialog(error: _error!),
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 5),
-                        child: Icon(Icons.info, color: Theme.of(context).colorScheme.warning, size: 20),
+                    Text('${t.shareHome.network}: ', style: hint),
+                    Flexible(
+                      child: QsDropdown<String>(
+                        value: localIps.any((ip) => ip.ipPrefix == _network) ? _network : _allNetworks,
+                        options: [
+                          (_allNetworks, t.qsSettings.allNetworks),
+                          for (final ip in localIps) (ip.ipPrefix, '${ip.ipPrefix}.${_input.isEmpty ? '…' : _input}'),
+                        ],
+                        onChanged: (network) => setState(() => _network = network),
                       ),
                     ),
                   ],
+                ),
+              const SizedBox(height: 6),
+              Text(t.qsManual.hashtagHint, style: hint),
+            ] else if (lastDevices.isNotEmpty) ...[
+              Text(t.dialogs.addressInput.recentlyUsed, style: hint),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final device in lastDevices)
+                    if (device.ip != null)
+                      ActionChip(
+                        label: Text(device.ip!),
+                        backgroundColor: p.chip,
+                        side: BorderSide.none,
+                        shape: const StadiumBorder(),
+                        onPressed: _fetching ? null : () async => _submit(localIps, settings.port, device.ip),
+                      ),
                 ],
               ),
-            ),
-        ],
+            ],
+            if (_fetching)
+              Padding(
+                padding: const EdgeInsets.only(top: 14),
+                child: Row(
+                  children: [
+                    SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: p.accent)),
+                    const SizedBox(width: 10),
+                    Text(t.qsManual.searching, style: hint),
+                  ],
+                ),
+              ),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: _error == t.qsManual.noNetwork
+                      ? null
+                      : () async => showDialog(
+                          context: context,
+                          builder: (_) => ErrorDialog(error: _error!),
+                        ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: p.danger, size: 18),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          _error == t.qsManual.noNetwork ? t.qsManual.noNetwork : t.qsManual.notFound,
+                          style: TextStyle(color: p.danger, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
@@ -272,7 +288,7 @@ class _AddressInputDialogState extends State<AddressInputDialog> with Refena {
           child: Text(t.general.cancel),
         ),
         FilledButton(
-          onPressed: _fetching ? null : () async => _submit(localIps, settings.port),
+          onPressed: canSubmit ? () async => _submit(localIps, settings.port) : null,
           child: Text(t.general.confirm),
         ),
       ],
@@ -303,7 +319,10 @@ class _DeviceChoiceDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = QsPalette(context);
     return AlertDialog(
+      backgroundColor: p.card,
+      shape: qsDialogShape(p),
       title: Text(t.shareHome.chooseDevice),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
@@ -340,7 +359,7 @@ class _DeviceChoiceDialog extends StatelessWidget {
                           const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: Text(t.shareHome.searchingNetworks, style: const TextStyle(color: Colors.grey)),
+                            child: Text(t.shareHome.searchingNetworks, style: TextStyle(color: p.sub)),
                           ),
                         ],
                       ),

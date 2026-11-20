@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:localsend_app/gen/strings.g.dart';
+import 'package:localsend_app/model/persistence/favorite_device.dart';
 import 'package:localsend_app/pages/receive_options_page.dart';
 import 'package:localsend_app/pages/verify_page.dart';
 import 'package:localsend_app/pages/web_share_page.dart';
@@ -424,8 +426,46 @@ class _Actions extends StatelessWidget {
 
     final onAccept = selectedFiles.isEmpty ? null : vm.onAccept;
 
+    // Quick Send: trust the sender right here. If a trusted device with the same name exists, its identity
+    // changed (e.g. Quick Send was reinstalled on it); never trusted by name alone, the user confirms once.
+    final favorites = context.watch(favoritesProvider);
+    final trusted = favorites.any((f) => f.fingerprint == vm.sender.fingerprint);
+    final previous = trusted ? null : favorites.firstWhereOrNull((f) => f.alias == vm.sender.alias);
+    Future<void> trustAndAccept() async {
+      final ref = context.ref;
+      if (previous != null) {
+        await ref.redux(favoritesProvider).dispatchAsync(RemoveFavoriteAction(deviceFingerprint: previous.fingerprint));
+      }
+      await ref
+          .redux(favoritesProvider)
+          .dispatchAsync(
+            AddFavoriteAction(
+              FavoriteDevice.fromValues(fingerprint: vm.sender.fingerprint, ip: vm.sender.ip ?? '', port: vm.sender.port, alias: vm.sender.alias),
+            ),
+          );
+      onAccept?.call();
+    }
+
     return Column(
       children: [
+        if (previous != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              t.shareHome.identityChanged(name: vm.sender.alias),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: QsPalette(context).sub, fontSize: 13, height: 1.4),
+            ),
+          ),
+        if (!trusted && vm.sender.fingerprint.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _QsButton(
+              icon: Icons.verified_user_outlined,
+              label: t.shareHome.trustAndAccept,
+              onPressed: onAccept == null ? null : trustAndAccept,
+            ),
+          ),
         Focus(
           autofocus: true,
           onKeyEvent: (node, event) {

@@ -519,3 +519,50 @@ PopupMenuItem<T> qsMenuItem<T>(QsPalette p, T value, IconData icon, String label
     ],
   ),
 );
+
+/* ---------------------------------------------------------------- dialogs */
+
+/// Shape of Quick Send dialogs (rounded card with the hairline border used by the settings groups).
+ShapeBorder qsDialogShape(QsPalette p) => RoundedRectangleBorder(
+  borderRadius: BorderRadius.circular(28),
+  side: BorderSide(color: p.border, width: 0.8),
+);
+
+/// A two-option pill selector (same look as the Receive/Send toggle, sized for dialogs).
+class QsSegmented<T> extends StatelessWidget {
+  final T value;
+  final List<(T, String)> options;
+  final ValueChanged<T> onChanged;
+
+  const QsSegmented({required this.value, required this.options, required this.onChanged, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = QsPalette(context);
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(color: p.chip, borderRadius: BorderRadius.circular(22)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final (v, label) in options)
+            Material(
+              color: v == value ? p.navActive : Colors.transparent,
+              borderRadius: BorderRadius.circular(18),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: () => onChanged(v),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  child: Text(
+                    label,
+                    style: TextStyle(fontSize: 14, fontWeight: v == value ? FontWeight.w700 : FontWeight.w500, color: v == value ? p.text : p.sub),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

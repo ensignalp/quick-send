@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/model/persistence/color_mode.dart';
 import 'package:localsend_app/provider/device_info_provider.dart';
+import 'package:localsend_app/quick_send/qs_style.dart';
 import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_app/util/ui/dynamic_colors.dart';
 import 'package:refena_flutter/refena_flutter.dart';
@@ -39,18 +40,43 @@ List<String>? qsFontFamilyFallback() {
 ThemeData getTheme(ColorMode colorMode, Color customColor, Brightness brightness, DynamicColors? dynamicColors) {
   final colorScheme = _determineColorScheme(colorMode, customColor, brightness, dynamicColors);
 
-  final lightInputBorder = OutlineInputBorder(
-    borderSide: BorderSide(color: colorScheme.secondaryContainer),
-    borderRadius: _borderRadius,
-  );
-
-  final darkInputBorder = OutlineInputBorder(
-    borderSide: BorderSide(color: colorScheme.secondaryContainer),
-    borderRadius: _borderRadius,
-  );
+  // Quick Send design for every dialog, bottom sheet and text field, including screens inherited from
+  // LocalSend (same colours as QsPalette / the Android app).
+  final qs = brightness == Brightness.dark ? QsPalette.darkPalette : QsPalette.light;
+  final qsInputBorder = OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none);
 
   return ThemeData(
     colorScheme: colorScheme,
+    scaffoldBackgroundColor: qs.bg,
+    appBarTheme: AppBarTheme(
+      backgroundColor: qs.bg,
+      foregroundColor: qs.text,
+      surfaceTintColor: Colors.transparent,
+      scrolledUnderElevation: 0,
+      titleTextStyle: TextStyle(fontFamily: qsFontFamily, fontSize: 22, fontWeight: FontWeight.w700, color: qs.text),
+    ),
+    cardTheme: CardThemeData(
+      color: qs.card,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: qs.border, width: 0.8),
+      ),
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: qs.card,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28),
+        side: BorderSide(color: qs.border, width: 0.8),
+      ),
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: qs.card,
+      surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+    ),
     useMaterial3: true,
     // same density on all platforms so desktop matches mobile (defaults to compact on desktop)
     visualDensity: VisualDensity.standard,
@@ -61,11 +87,11 @@ ThemeData getTheme(ColorMode colorMode, Color customColor, Brightness brightness
         : null,
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: colorScheme.secondaryContainer,
-      border: colorScheme.brightness == Brightness.light ? lightInputBorder : darkInputBorder,
-      focusedBorder: colorScheme.brightness == Brightness.light ? lightInputBorder : darkInputBorder,
-      enabledBorder: colorScheme.brightness == Brightness.light ? lightInputBorder : darkInputBorder,
-      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+      fillColor: qs.chip,
+      border: qsInputBorder,
+      enabledBorder: qsInputBorder,
+      focusedBorder: qsInputBorder.copyWith(borderSide: BorderSide(color: qs.accent, width: 2)),
+      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -142,10 +168,12 @@ extension InputDecorationThemeExt on InputDecorationThemeData {
 }
 
 ColorScheme _determineColorScheme(ColorMode mode, Color customColor, Brightness brightness, DynamicColors? dynamicColors) {
+  // Quick Send: the default palette is built around the app's accent (LocalSend used #315DA8).
+  final qsAccent = brightness == Brightness.dark ? QsPalette.darkPalette.accent : QsPalette.light.accent;
   final defaultColorScheme = ColorScheme.fromSeed(
-    seedColor: const Color(0xFF315DA8),
+    seedColor: qsAccent,
     brightness: brightness,
-  );
+  ).copyWith(primary: qsAccent, onPrimary: Colors.white);
 
   final colorScheme = switch (mode) {
     ColorMode.system => brightness == Brightness.light ? dynamicColors?.light : dynamicColors?.dark,

@@ -36,6 +36,7 @@ import 'package:localsend_app/provider/network/send_provider.dart';
 import 'package:localsend_app/provider/network/server/server_provider.dart';
 import 'package:localsend_app/provider/selection/selected_sending_files_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
+import 'package:localsend_app/quick_send/avatar.dart';
 import 'package:localsend_app/quick_send/internet_page.dart';
 import 'package:localsend_app/quick_send/qs_style.dart';
 import 'package:localsend_app/quick_send/settings_page.dart';
@@ -237,7 +238,7 @@ class _TopBar extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _LetterAvatar(name: alias, size: 30),
+                        QsSelfAvatar(size: 30, fallback: _LetterAvatar(name: alias, size: 30)),
                         const SizedBox(width: 9),
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 220),
@@ -355,7 +356,7 @@ class _InfoDialogState extends State<_InfoDialog> {
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  _LetterAvatar(name: alias, size: 64),
+                  QsSelfAvatar(size: 64, fallback: _LetterAvatar(name: alias, size: 64)),
                   Positioned(
                     right: -1,
                     bottom: -1,

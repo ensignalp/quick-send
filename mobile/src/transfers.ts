@@ -26,3 +26,27 @@ export function mergeFiles<T extends { uri: string }>(current: T[], added: T[]):
   }
   return result;
 }
+
+export type FileKind = 'image' | 'video' | 'document' | 'audio' | 'other';
+
+/** Kind of a file from its MIME type (recent activity filters). */
+export function kindOf(mimeType: string | undefined): FileKind {
+  const m = (mimeType ?? '').toLowerCase();
+  if (m.startsWith('image/')) return 'image';
+  if (m.startsWith('video/')) return 'video';
+  if (m.startsWith('audio/')) return 'audio';
+  if (m.startsWith('text/') || m === 'application/pdf' || m.includes('document') || m.includes('msword') || m.includes('sheet')
+    || m.includes('excel') || m.includes('presentation') || m.includes('powerpoint') || m.includes('epub') || m.includes('rtf')) return 'document';
+  return 'other';
+}
+
+/** The distinct kinds of a set of files. */
+export function kindsOf(files: Array<{ mimeType?: string }>): FileKind[] {
+  return [...new Set(files.map(f => kindOf(f.mimeType)))];
+}
+
+/** Start of the day (local time) of [at]. */
+export function dayStart(at: number): number {
+  const d = new Date(at);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}

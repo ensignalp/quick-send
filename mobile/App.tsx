@@ -1,27 +1,32 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, AppState, Keyboard, Linking, Share, Platform, Pressable, ScrollView, StatusBar, StyleSheet, TextInput, useColorScheme, useWindowDimensions, View } from 'react-native';
+import { Animated, AppState, BackHandler, Keyboard, Linking, Share, Platform, Pressable, ScrollView, StatusBar, StyleSheet, TextInput, useColorScheme, useWindowDimensions, View } from 'react-native';
 import { configureFonts, MD3DarkTheme, MD3LightTheme, Modal, PaperProvider, Portal } from 'react-native-paper';
 import { SpaceGrotesk_300Light, SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold, useFonts } from '@expo-google-fonts/space-grotesk';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { checkForUpdate, UpdateResult } from './src/updateCheck';
-import { aggregateProgress, mergeFiles } from './src/transfers';
+import { aggregateProgress, dayStart, kindsOf, mergeFiles } from './src/transfers';
+
+const DAY_MS = 86_400_000;
 import { copy, Copy, Language } from './src/strings';
 import {
-  bridge, defaultSettings, Device, HistoryEntry, IncomingTransfer, isPreview, loadSettings, NetworkInfo, Outgoing, randomPin, saveSettings,
+  bridge, defaultSettings, Device, HistoryEntry, IncomingTransfer, isPreview, loadSettingsWithOrigin, NetworkInfo, Outgoing, randomPin, saveSettings,
   MediaItem, Settings, ShareMode, SharedFile, subscribe,
 } from './src/core';
 import { FilePicker, Thumb } from './src/picker';
+import { QrCode, QrScanner } from './src/qr';
+import { formatHashtag, formatIpv4Input, hashtagCandidates, isCompleteIpv4 } from './src/address';
+import { whatsNewFor, WhatsNewItem } from './src/whatsNew';
 import {
   AppIcon, Avatar, deviceIcon, deviceLabel, Dropdown, fontFor, Text, FadeIn, fileIcon, formatSize, Group, Halo, IconCircle, LetterAvatar, LinearProgress, MotionContext, Palette, palettes,
   Pill, ProgressRing, Pulse, ReceiveGlow, Row, SectionLabel, Separator, Spinner, SuccessBadge, SwitchRow, timeAgo,
 } from './src/ui';
 
 type Tab = 'receive' | 'send';
-type Screen = 'home' | 'settings' | 'picker';
+type Screen = 'home' | 'settings' | 'picker' | 'history';
 type Sheet =
-  | { kind: 'info' } | { kind: 'files' } | { kind: 'history' } | { kind: 'privacy' } | { kind: 'about' }
-  | { kind: 'device'; device: Device } | { kind: 'name' } | { kind: 'restart' } | { kind: 'photo' } | { kind: 'internet' } | null;
+  | { kind: 'info' } | { kind: 'files' } | { kind: 'privacy' } | { kind: 'about' }
+  | { kind: 'device'; device: Device } | { kind: 'name' } | { kind: 'restart' } | { kind: 'photo' } | { kind: 'internet' } | { kind: 'manual' } | { kind: 'whatsNew'; items: WhatsNewItem[] } | null;
 type Received = { sender: string; fingerprint?: string; count: number };
 
 const PORT = 53317;
@@ -82,7 +87,17 @@ function AppContent() {
   /* ------------------------------------------------------------ startup */
 
   useEffect(() => {
-    loadSettings().then(s => { setSettings(s); setLoaded(true); }).catch(() => setLoaded(true));
+    loadSettingsWithOrigin().then(async ({ settings: s, stored }) => {
+      setSettings(s); setLoaded(true);
+      // "What's new" once after an update (not on a fresh install), then remember this version.
+      // `updated` covers updates from versions that never stored settings (e.g. 1.0.0 opened once).
+      const info = await bridge?.getAppInfo().catch(() => null);
+      if (!info) return;
+      const lang = s.language ?? (refs.current.t === copy.tr ? 'tr' : 'en');
+      const items = (stored || info.updated) && s.lastVersion !== info.version ? whatsNewFor(info.version, lang) : null;
+      if (items) setSheet({ kind: 'whatsNew', items });
+      if (s.lastVersion !== info.version) updateSettings({ lastVersion: info.version });
+    }).catch(() => setLoaded(true));
     bridge?.getLanguage?.().then(locale => locale === 'tr' && setSystemLanguage('tr')).catch(() => undefined);
     bridge?.getCoreConfig?.().then(cfg => { setAlias(cfg.alias); setPin(cfg.pin); }).catch(() =>
       bridge?.getAppInfo().then(info => info.alias && setAlias(info.alias)).catch(() => undefined));
@@ -93,7 +108,13 @@ function AppContent() {
       switch (event.type) {
         case 'devices': setDevices(event.devices ?? []); break;
         case 'device': setDevices(current => mergeDevice(current, event.device)); break;
-        case 'sharedFiles': setSelected(event.files ?? []); setTab('send'); setScreen('home'); break;
+        case 'sharedFiles': {
+          const shared: SharedFile[] = event.files ?? [];
+          setSelected(shared); setTab('send'); setScreen('home');
+          // Picked a device in the Android share sheet (Direct Share): send to it right away.
+          if (event.target && shared.length) { setDevices(current => mergeDevice(current, event.target)); sendFilesTo(event.target, shared); }
+          break;
+        }
         case 'transferRequest': {
           const transfer: IncomingTransfer = event.transfer;
           if (event.autoAccepted) {
@@ -146,13 +167,13 @@ function AppContent() {
           break;
         case 'sendComplete': {
           const o = Object.values(refs.current.outgoing).find(x => x.id === event.transferId);
-          if (o) addHistory({ direction: 'sent', peer: o.alias, count: o.files.length, size: o.files.reduce((s, f) => s + f.size, 0), ok: true });
+          if (o) addHistory({ direction: 'sent', peer: o.alias, count: o.files.length, size: o.files.reduce((s, f) => s + f.size, 0), ok: true, kinds: kindsOf(o.files) });
           updateOutgoing(event.transferId, x => ({ ...x, progress: 1, status: 'sent' }));
           break;
         }
         case 'sendFailed': {
           const o = Object.values(refs.current.outgoing).find(x => x.id === event.transferId);
-          if (o && o.status !== 'failed') addHistory({ direction: 'sent', peer: o.alias, count: o.files.length, size: o.files.reduce((s, f) => s + f.size, 0), ok: false });
+          if (o && o.status !== 'failed') addHistory({ direction: 'sent', peer: o.alias, count: o.files.length, size: o.files.reduce((s, f) => s + f.size, 0), ok: false, kinds: kindsOf(o.files) });
           updateOutgoing(event.transferId, x => ({ ...x, status: 'failed' }));
           if (event.message) setMessage(event.message);
           break;
@@ -161,7 +182,7 @@ function AppContent() {
           const cur = refs.current.pending;
           if (cur && cur.sessionId === event.sessionId) {
             const done = !!cur.accepted && ((cur.progress ?? 0) >= 0.999 || (cur.savedFiles ?? 0) >= cur.files.length);
-            if (cur.accepted) addHistory({ direction: 'received', peer: cur.sender, count: cur.files.length, size: cur.files.reduce((s, f) => s + f.size, 0), ok: done });
+            if (cur.accepted) addHistory({ direction: 'received', peer: cur.sender, count: cur.files.length, size: cur.files.reduce((s, f) => s + f.size, 0), ok: done, kinds: kindsOf(cur.files) });
             if (done) setReceived({ sender: cur.sender, fingerprint: cur.fingerprint, count: cur.files.length });
             setIncoming(null);
           }
@@ -175,11 +196,18 @@ function AppContent() {
       setNetworkReady(started);
       if (!started) setMessage(refs.current.t.permissionDenied);
       return native.getInitialSharedFiles();
-    }).then(files => {
-      if (files.length) { setSelected(files); setTab('send'); }
+    }).then(async files => {
+      if (!files.length) return;
+      setSelected(files); setTab('send');
+      const target = await native.getInitialShareTarget?.().catch(() => null);
+      if (target) {
+        const device: Device = JSON.parse(target);
+        setDevices(current => mergeDevice(current, device));
+        sendFilesTo(device, files);
+      }
     }).catch(() => undefined);
     return () => subscription.remove();
-  }, [addHistory]);
+  }, [addHistory, updateSettings]);
 
   /* ------------------------------------------------------- receive mode */
 
@@ -218,6 +246,17 @@ function AppContent() {
     setSheet(null);
   };
 
+  /** Starts a send to [device] (uses only stable state setters, so event handlers can call it too). */
+  async function sendFilesTo(device: Device, files: SharedFile[]) {
+    if (!bridge) return;
+    try {
+      const id = await bridge.sendFiles(device, files);
+      if (id) {
+        setOutgoing(o => ({ ...o, [device.fingerprint]: { id, fingerprint: device.fingerprint, alias: device.alias, files, fileProgress: {}, progress: 0, status: 'waiting' } }));
+      }
+    } catch { setMessage(refs.current.t.transferFailed); }
+  }
+
   const sendTo = async (device: Device) => {
     if (!bridge) { setMessage(t.bridgeMissing); return; }
     const current = outgoing[device.fingerprint];
@@ -226,13 +265,7 @@ function AppContent() {
       return;
     }
     if (!selected.length) { openPicker(); return; }
-    const files = selected;
-    try {
-      const id = await bridge.sendFiles(device, files);
-      if (id) {
-        setOutgoing(o => ({ ...o, [device.fingerprint]: { id, fingerprint: device.fingerprint, alias: device.alias, files, fileProgress: {}, progress: 0, status: 'waiting' } }));
-      }
-    } catch { setMessage(t.transferFailed); }
+    await sendFilesTo(device, selected);
   };
 
   const retryDiscovery = async () => {
@@ -294,6 +327,13 @@ function AppContent() {
     return () => clearTimeout(timer);
   }, [message]);
 
+  // Android back: from Settings / Recent activity / the picker back to the home screen instead of leaving the app.
+  useEffect(() => {
+    if (screen === 'home') return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => { setScreen('home'); return true; });
+    return () => sub.remove();
+  }, [screen]);
+
   // After sending: once every transfer has ended and at least one succeeded (none failed), show "Sent"
   // on the tile for a moment, then confirm with a message, clear the selection and return to Receive.
   useEffect(() => {
@@ -337,15 +377,17 @@ function AppContent() {
           {screen === 'picker' ? <FilePicker t={t} c={c} language={settings.language ?? systemLanguage} topInset={0} bottomInset={insets.bottom}
             onCancel={() => setScreen('home')} onDone={finishPicker} /> : screen === 'home' ? <>
             <TopBar t={t} c={c} alias={alias} avatar={settings.avatar} onInfo={() => setSheet({ kind: 'info' })} onSettings={() => setScreen('settings')}
-              onHistory={() => setSheet({ kind: 'history' })} onRefresh={retryDiscovery} onInternet={() => setSheet({ kind: 'internet' })} />
+              onHistory={() => setScreen('history')} onRefresh={retryDiscovery} onInternet={() => setSheet({ kind: 'internet' })} onManual={() => setSheet({ kind: 'manual' })} />
             {tab === 'receive'
               ? <ReceiveView key="receive" t={t} c={c} receiverOn={receiverOn} bottomInset={insets.bottom} onSettings={() => setScreen('settings')} />
               : <SendView key="send" t={t} c={c} devices={devices} networkReady={networkReady} selected={selected} outgoing={outgoing}
                 trusted={settings.trusted} history={settings.history} bottomInset={insets.bottom}
                 onPick={openPicker} onOpenFiles={() => setSheet({ kind: 'files' })} onSend={sendTo} onRetry={retryDiscovery}
-                onDeviceMenu={device => setSheet({ kind: 'device', device })} onHistory={() => setSheet({ kind: 'history' })} />}
+                onDeviceMenu={device => setSheet({ kind: 'device', device })} onHistory={() => setScreen('history')} />}
             <TabBar t={t} c={c} tab={tab} onChange={setTab} bottom={insets.bottom + 14} />
-          </> : (
+          </> : screen === 'history' ? (
+            <HistoryScreen t={t} c={c} history={settings.history} bottomInset={insets.bottom} onBack={() => setScreen('home')} />
+          ) : (
             <SettingsScreen t={t} c={c} settings={settings} update={updateSettings} alias={alias} pin={pin} receiverOn={receiverOn}
               bottomInset={insets.bottom} onBack={() => setScreen('home')} onEditName={() => setSheet({ kind: 'name' })} onPhoto={() => setSheet({ kind: 'photo' })}
               onPin={next => saveCoreConfig(alias, next)} onRestartReceiver={restartReceiver}
@@ -367,12 +409,14 @@ function AppContent() {
             </Modal>
             <Modal visible={!!sheet && !pending && !received} onDismiss={() => setSheet(null)} style={styles.modalHost} contentContainerStyle={modalCard}>
               {sheet?.kind === 'photo' && <PhotoSheet t={t} c={c} alias={alias} avatar={settings.avatar} onChoose={choosePhoto} onRemove={removePhoto} onClose={() => setSheet(null)} />}
+              {sheet?.kind === 'whatsNew' && <WhatsNewSheet t={t} c={c} items={sheet.items} onClose={() => setSheet(null)} />}
+              {sheet?.kind === 'manual' && <ManualSheet t={t} c={c} onClose={() => setSheet(null)}
+                onFound={device => { setSheet(null); setDevices(current => mergeDevice(current, device)); setTab('send'); sendTo(device); }} />}
               {sheet?.kind === 'internet' && <InternetSheet t={t} c={c} files={selected} onPick={() => { setSheet(null); openPicker(); }}
                 onHistory={addHistory} onClose={() => setSheet(null)} />}
               {sheet?.kind === 'info' && <InfoSheet t={t} c={c} alias={alias} avatar={settings.avatar} mode={effectiveMode} receiverOn={receiverOn} onClose={() => setSheet(null)} />}
               {sheet?.kind === 'files' && <FilesSheet t={t} c={c} files={selected} onRemove={id => setSelected(s => s.filter(f => f.id !== id))}
                 onAdd={() => { setSheet(null); openPicker(); }} onClear={clearSelection} onClose={() => setSheet(null)} />}
-              {sheet?.kind === 'history' && <HistorySheet t={t} c={c} history={settings.history} onClose={() => setSheet(null)} />}
               {sheet?.kind === 'device' && <DeviceSheet t={t} c={c} device={sheet.device} trusted={isTrusted(sheet.device.fingerprint)}
                 onTrust={v => setTrusted(sheet.device.fingerprint, sheet.device.alias, v)} onClose={() => setSheet(null)} />}
               {sheet?.kind === 'privacy' && <TextSheet t={t} c={c} title={t.privacyNotice} body={t.privacyText} onClose={() => setSheet(null)} />}
@@ -394,8 +438,9 @@ function mergeDevice(devices: Device[], next: Device): Device[] {
 
 /* ------------------------------------------------------------ top / tabs */
 
-function TopBar({ t, c, alias, avatar, onInfo, onSettings, onHistory, onRefresh, onInternet }: {
-  t: Copy; c: Palette; alias: string; avatar: string | null; onInfo: () => void; onSettings: () => void; onHistory: () => void; onRefresh: () => void; onInternet: () => void;
+function TopBar({ t, c, alias, avatar, onInfo, onSettings, onHistory, onRefresh, onInternet, onManual }: {
+  t: Copy; c: Palette; alias: string; avatar: string | null; onInfo: () => void; onSettings: () => void; onHistory: () => void; onRefresh: () => void;
+  onInternet: () => void; onManual: () => void;
 }) {
   return <View style={styles.topBar}>
     <View style={styles.topSide} />
@@ -411,6 +456,7 @@ function TopBar({ t, c, alias, avatar, onInfo, onSettings, onHistory, onRefresh,
         { icon: 'refresh', label: t.menuRefresh, onPress: onRefresh },
         { icon: 'history', label: t.menuHistory, onPress: onHistory },
         { icon: 'web', label: t.menuInternet, onPress: onInternet },
+        { icon: 'ip-network-outline', label: t.menuManual, onPress: onManual },
         { icon: 'cog-outline', label: t.menuSettings, onPress: onSettings },
       ]} renderAnchor={open => <IconCircle icon="dots-vertical" color={c.text} label={t.menuSettings} onPress={open} />} />
     </View>
@@ -685,6 +731,100 @@ function ReceivedCard({ t, c, received, trusted, onTrust, onClose }: { t: Copy; 
 
 /* ---------------------------------------------------------------- sheets */
 
+function WhatsNewSheet({ t, c, items, onClose }: { t: Copy; c: Palette; items: WhatsNewItem[]; onClose: () => void }) {
+  return <View>
+    <SheetHeader t={t} c={c} title={t.whatsNewTitle} onClose={onClose} />
+    <ScrollView style={styles.sheetScroll}>
+      {items.map(item => <View key={item.icon} style={styles.whatsNewRow}>
+        <View style={[styles.fileIcon, { backgroundColor: c.accentSoft }]}>
+          <MaterialCommunityIcons name={item.icon as any} size={20} color={c.accent} />
+        </View>
+        <Text style={[styles.whatsNewText, { color: c.text }]}>{item.text}</Text>
+      </View>)}
+    </ScrollView>
+    <View style={styles.actions}><Pill c={c} label={t.ok} filled onPress={onClose} /></View>
+  </View>;
+}
+
+/**
+ * Manual sending: an IP address (dots are added automatically) or "#" and the last number of the address,
+ * tried on each of this phone's networks — the same as LocalSend's hashtag. The device is asked who it is
+ * (LocalSend register) before anything is sent; with several answers the user picks one.
+ */
+function ManualSheet({ t, c, onFound, onClose }: { t: Copy; c: Palette; onFound: (device: Device) => void; onClose: () => void }) {
+  const [mode, setMode] = useState<'hash' | 'ip'>('hash');
+  const [input, setInput] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [choices, setChoices] = useState<Device[] | null>(null);
+  const [addresses, setAddresses] = useState<string[]>([]);
+  const [keyboard, setKeyboard] = useState(0);
+  useEffect(() => {
+    bridge?.getNetworkInfo?.().then(n => setAddresses(n.addresses)).catch(() => undefined);
+    const show = Keyboard.addListener('keyboardDidShow', e => setKeyboard(e.endCoordinates.height));
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboard(0));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
+  const candidates = mode === 'ip' ? (isCompleteIpv4(input) ? [input] : []) : input ? hashtagCandidates(addresses, input) : [];
+  const preview = mode === 'hash' && candidates.length ? candidates.join(', ') : '';
+
+  const search = async () => {
+    if (!bridge?.probe || !candidates.length) return;
+    setBusy(true); setError(''); setChoices(null);
+    const found: Device[] = [];
+    await new Promise<void>(resolve => {
+      const ids = new Set<string>();
+      const early = new Map<string, any>(); // answers that arrive before their request id is known
+      let pending = candidates.length;
+      const settle = (event: any) => {
+        if (event?.device && !found.some(d => d.fingerprint === event.device.fingerprint)) found.push(event.device);
+        pending -= 1;
+        if (pending <= 0) { clearTimeout(timer); sub.remove(); resolve(); }
+      };
+      const timer = setTimeout(() => { sub.remove(); resolve(); }, 8000);
+      const sub = subscribe((event: any) => {
+        if (event.type !== 'probeResult') return;
+        if (ids.has(event.requestId)) settle(event); else early.set(event.requestId, event);
+      });
+      candidates.forEach(host => bridge!.probe!(host, PORT)
+        .then(id => { ids.add(id); if (early.has(id)) settle(early.get(id)); })
+        .catch(() => settle(null)));
+    });
+    setBusy(false);
+    if (!found.length) setError(t.manualNotFound);
+    else if (found.length === 1 && candidates.length === 1) onFound(found[0]);
+    else setChoices(found);
+  };
+
+  return <View style={{ paddingBottom: keyboard }}>
+    <SheetHeader t={t} c={c} title={t.manualTitle} onClose={onClose} />
+    {choices ? <>
+      <Text style={[styles.rowSub, styles.sheetIntro, { color: c.sub }]}>{t.manualChoose}</Text>
+      <View style={[styles.group, { backgroundColor: c.bg }]}>
+        {choices.map(d => <Row key={d.fingerprint} c={c} title={d.alias} hint={`${d.host}${d.deviceModel ? ` · ${d.deviceModel}` : ''}`} onPress={() => onFound(d)} />)}
+      </View>
+    </> : <>
+      <View style={[styles.segment, { backgroundColor: c.chip }]}>
+        {(['hash', 'ip'] as const).map(m => <Pressable key={m} onPress={() => { setMode(m); setInput(''); setError(''); }} accessibilityRole="button"
+          accessibilityState={{ selected: mode === m }} style={[styles.segmentItem, mode === m && { backgroundColor: c.navActive }]}>
+          <Text style={[styles.filterText, { color: mode === m ? c.text : c.sub, fontFamily: fontFor(mode === m ? '700' : '500') }]}>{m === 'hash' ? t.manualHashtag : t.manualIp}</Text>
+        </Pressable>)}
+      </View>
+      <TextInput value={input} autoFocus keyboardType="number-pad" accessibilityLabel={mode === 'hash' ? t.manualHashtag : t.manualIp}
+        placeholder={mode === 'hash' ? '# 123' : '192.168.1.123'} placeholderTextColor={c.sub}
+        onChangeText={v => { setError(''); setInput(mode === 'hash' ? formatHashtag(v, input) : formatIpv4Input(v, v.length >= input.length)); }}
+        onSubmitEditing={search}
+        style={[styles.input, { color: c.text, backgroundColor: c.bg, borderColor: candidates.length ? c.accent : c.faint, fontFamily: fontFor('600') }]} />
+      <Text style={[styles.rowSub, styles.sheetIntro, { color: error ? c.danger : c.sub }]}>
+        {error || (mode === 'hash' ? (preview ? `${t.manualWillTry} ${preview}` : t.manualHashtagHint) : t.manualIpHint)}
+      </Text>
+      <View style={styles.actions}>
+        <Pill c={c} label={busy ? t.manualSearching : t.manualSend} icon="send" filled onPress={() => { if (!busy) search(); }} />
+      </View>
+    </>}
+  </View>;
+}
+
 /**
  * Transfers over the internet (iroh): works when the devices are on different networks (mobile data,
  * another Wi-Fi). Sending shows a code to pass on (any messenger); receiving takes that code. Sharing runs
@@ -695,8 +835,8 @@ function InternetSheet({ t, c, files, onPick, onHistory, onClose }: {
   onHistory: (entry: Omit<HistoryEntry, 'id' | 'at'>) => void; onClose: () => void;
 }) {
   type State =
-    | { step: 'menu' } | { step: 'preparing' } | { step: 'sharing'; code: string; peer: boolean; sent: number }
-    | { step: 'enter' } | { step: 'receiving'; done: number; total: number } | { step: 'received'; count: number }
+    | { step: 'menu' } | { step: 'preparing' } | { step: 'sharing'; code: string; peer: boolean; sent: number } | { step: 'sent' }
+    | { step: 'enter' } | { step: 'scan' } | { step: 'receiving'; done: number; total: number } | { step: 'received'; count: number }
     | { step: 'error'; message: string };
   const [state, setState] = useState<State>({ step: 'menu' });
   const [code, setCode] = useState('');
@@ -709,6 +849,9 @@ function InternetSheet({ t, c, files, onPick, onHistory, onClose }: {
   }, []);
   const idRef = useRef<string | null>(null);
   const size = files.reduce((n, f) => n + f.size, 0);
+  // Read inside the event effect; a dependency would re-run it, and its cleanup cancels the transfer.
+  const kindsRef = useRef(kindsOf(files));
+  kindsRef.current = kindsOf(files);
 
   useEffect(() => {
     const sub = subscribe((event: any) => {
@@ -718,8 +861,11 @@ function InternetSheet({ t, c, files, onPick, onHistory, onClose }: {
         case 'ticket': setState({ step: 'sharing', code: e.ticket, peer: false, sent: 0 }); break;
         case 'peerConnected': setState(s => s.step === 'sharing' ? { ...s, peer: true } : s); break;
         case 'sent':
-          setState(s => s.step === 'sharing' ? { ...s, sent: e.count } : s);
-          onHistory({ direction: 'sent', peer: t.internetPeer, count: files.length, size, ok: true });
+          // The other device has everything: stop sharing so the code stops working.
+          if (idRef.current) bridge?.internetCancel?.(idRef.current).catch(() => undefined);
+          idRef.current = null;
+          setState({ step: 'sent' });
+          onHistory({ direction: 'sent', peer: t.internetPeer, count: files.length, size, ok: true, kinds: kindsRef.current });
           break;
         case 'connecting': setState({ step: 'receiving', done: 0, total: 0 }); break;
         case 'progress': setState({ step: 'receiving', done: e.done, total: e.total }); break;
@@ -741,10 +887,10 @@ function InternetSheet({ t, c, files, onPick, onHistory, onClose }: {
     setState({ step: 'preparing' });
     try { idRef.current = await bridge!.internetSend!(files); } catch (e: any) { setState({ step: 'error', message: e?.message ?? '' }); }
   };
-  const startReceive = async () => {
+  const startReceive = async (value = code) => {
     try {
       setState({ step: 'receiving', done: 0, total: 0 });
-      idRef.current = await bridge!.internetReceive!(code.trim());
+      idRef.current = await bridge!.internetReceive!(value.trim());
     } catch (e: any) {
       setState({ step: 'error', message: e?.code === 'invalid_code' ? t.internetInvalid : e?.message ?? '' });
     }
@@ -766,16 +912,27 @@ function InternetSheet({ t, c, files, onPick, onHistory, onClose }: {
     {state.step === 'preparing' && <Text style={[styles.rowSub, styles.sheetIntro, { color: c.sub }]}>{t.internetPreparing}</Text>}
     {state.step === 'sharing' && <>
       <Text style={[styles.rowSub, styles.sheetIntro, { color: c.sub }]}>{t.internetShareCode}</Text>
+      <View style={styles.qrWrap}><QrCode value={state.code} size={250} /></View>
       <View style={[styles.codeBox, { backgroundColor: c.bg, borderColor: c.faint }]}>
-        <Text selectable numberOfLines={4} style={[styles.codeText, { color: c.text }]}>{state.code}</Text>
+        <Text selectable numberOfLines={3} style={[styles.codeText, { color: c.text }]}>{state.code}</Text>
       </View>
-      <Text style={[styles.rowSub, styles.sheetIntro, { color: state.sent ? c.success : c.sub }]}>
-        {state.sent ? t.internetSent : state.peer ? t.internetPeerConnected : t.internetWaiting}
+      <Text style={[styles.rowSub, styles.sheetIntro, { color: c.sub }]}>
+        {state.peer ? t.internetPeerConnected : t.internetWaiting}
       </Text>
       <View style={styles.actions}>
         <Pill c={c} label={t.internetStop} icon="stop" outlined onPress={stop} />
         <Pill c={c} label={t.internetShareButton} icon="share-variant" filled onPress={() => { Share.share({ message: state.code }).catch(() => undefined); }} />
       </View>
+    </>}
+    {state.step === 'sent' && <>
+      <Text style={[styles.infoName, styles.center, { color: c.success }]}>{t.sent}</Text>
+      <Text style={[styles.rowSub, styles.center, styles.sheetIntro, { color: c.sub }]}>{t.internetSentStopped}</Text>
+      <View style={styles.actions}><Pill c={c} label={t.ok} filled onPress={onClose} /></View>
+    </>}
+    {state.step === 'scan' && <>
+      <Text style={[styles.rowSub, styles.sheetIntro, { color: c.sub }]}>{t.internetScanHint}</Text>
+      <QrScanner t={t} c={c} onScanned={data => { setCode(data); startReceive(data); }} />
+      <View style={styles.actions}><Pill c={c} label={t.cancel} icon="close" outlined onPress={() => setState({ step: 'enter' })} /></View>
     </>}
     {state.step === 'enter' && <>
       <Text style={[styles.rowSub, styles.sheetIntro, { color: c.sub }]}>{t.internetEnterCode}</Text>
@@ -783,6 +940,7 @@ function InternetSheet({ t, c, files, onPick, onHistory, onClose }: {
         accessibilityLabel={t.internetEnterCode} placeholder="blob…" placeholderTextColor={c.sub}
         style={[styles.input, styles.codeInput, { color: c.text, backgroundColor: c.bg, borderColor: code.trim() ? c.accent : c.faint, fontFamily: fontFor('400') }]} />
       <View style={styles.actions}>
+        <Pill c={c} label={t.internetScan} icon="qrcode-scan" outlined onPress={() => setState({ step: 'scan' })} />
         <Pill c={c} label={t.internetReceiveButton} icon="download" filled onPress={() => { if (code.trim()) startReceive(); }} />
       </View>
     </>}
@@ -892,16 +1050,58 @@ function FilesSheet({ t, c, files, onRemove, onAdd, onClear, onClose }: { t: Cop
   </View>;
 }
 
-function HistorySheet({ t, c, history, onClose }: { t: Copy; c: Palette; history: HistoryEntry[]; onClose: () => void }) {
-  return <View>
-    <SheetHeader t={t} c={c} title={t.history} onClose={onClose} />
-    {history.length === 0
-      ? <Text style={[styles.rowSub, styles.historyEmpty, { color: c.sub }]}>{t.historyEmpty}</Text>
-      : <ScrollView style={styles.sheetScroll}>{history.map(h => <HistoryRow key={h.id} t={t} c={c} entry={h} />)}</ScrollView>}
-    {history.length > 0 && bridge?.openDownloads && <View style={styles.actions}>
-      <Pill c={c} label={t.viewDownloads} icon="folder-download-outline" onPress={() => bridge?.openDownloads?.().catch(() => undefined)} outlined />
-    </View>}
-  </View>;
+type KindFilter = 'all' | 'image' | 'video' | 'document' | 'other';
+type DateFilter = 'all' | 'today' | 'week' | 'month';
+
+/** Recent activity as its own page, with file-kind and date filters, grouped by day. */
+function HistoryScreen({ t, c, history, bottomInset, onBack }: { t: Copy; c: Palette; history: HistoryEntry[]; bottomInset: number; onBack: () => void }) {
+  const [kind, setKind] = useState<KindFilter>('all');
+  const [date, setDate] = useState<DateFilter>('all');
+  const today = dayStart(Date.now());
+  const since = date === 'today' ? today : date === 'week' ? today - 6 * DAY_MS : date === 'month' ? today - 29 * DAY_MS : 0;
+  const entries = history.filter(h => h.at >= since && (kind === 'all'
+    || (kind === 'other' ? (h.kinds ?? []).some(k => k === 'other' || k === 'audio') : (h.kinds ?? []).includes(kind))));
+  const groups: Array<{ label: string; items: HistoryEntry[] }> = [];
+  for (const h of entries) {
+    const d = dayStart(h.at);
+    const label = d === today ? t.today : d === today - DAY_MS ? t.yesterday : new Date(d).toLocaleDateString();
+    const last = groups[groups.length - 1];
+    if (last && last.label === label) last.items.push(h); else groups.push({ label, items: [h] });
+  }
+  const kinds: Array<{ value: KindFilter; label: string }> = [
+    { value: 'all', label: t.filterAll }, { value: 'image', label: t.filterImages }, { value: 'video', label: t.filterVideos },
+    { value: 'document', label: t.filterDocuments }, { value: 'other', label: t.filterOther },
+  ];
+  const dates: Array<{ value: DateFilter; label: string }> = [
+    { value: 'all', label: t.anyTime }, { value: 'today', label: t.today }, { value: 'week', label: t.last7 }, { value: 'month', label: t.last30 },
+  ];
+  const chip = (selected: boolean) => [styles.filterChip, { backgroundColor: selected ? c.navActive : c.chip }];
+  return <FadeIn style={styles.flex}>
+    <View style={styles.settingsHeader}>
+      <IconCircle icon="arrow-left" color={c.text} label={t.back} onPress={onBack} />
+      <Text style={[styles.settingsTitle, { color: c.text }]} accessibilityRole="header">{t.history}</Text>
+    </View>
+    <ScrollView style={styles.flex} contentContainerStyle={[styles.settingsContent, { paddingBottom: bottomInset + 32 }]}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+        {kinds.map(k => <Pressable key={k.value} onPress={() => setKind(k.value)} accessibilityRole="button" accessibilityState={{ selected: kind === k.value }} style={chip(kind === k.value)}>
+          <Text style={[styles.filterText, { color: kind === k.value ? c.text : c.sub, fontFamily: fontFor(kind === k.value ? '700' : '500') }]}>{k.label}</Text>
+        </Pressable>)}
+      </ScrollView>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+        {dates.map(d => <Pressable key={d.value} onPress={() => setDate(d.value)} accessibilityRole="button" accessibilityState={{ selected: date === d.value }} style={chip(date === d.value)}>
+          <Text style={[styles.filterText, { color: date === d.value ? c.text : c.sub, fontFamily: fontFor(date === d.value ? '700' : '500') }]}>{d.label}</Text>
+        </Pressable>)}
+      </ScrollView>
+      {entries.length === 0
+        ? <Text style={[styles.rowSub, styles.historyEmpty, { color: c.sub }]}>{history.length === 0 ? t.historyEmpty : t.historyNoMatch}</Text>
+        : groups.map(g => <Group key={g.label} c={c} title={g.label}>
+          {g.items.map(h => <HistoryRow key={h.id} t={t} c={c} entry={h} />)}
+        </Group>)}
+      {history.length > 0 && bridge?.openDownloads && <View style={styles.actions}>
+        <Pill c={c} label={t.viewDownloads} icon="folder-download-outline" onPress={() => bridge?.openDownloads?.().catch(() => undefined)} outlined />
+      </View>}
+    </ScrollView>
+  </FadeIn>;
 }
 
 function HistoryRow({ t, c, entry }: { t: Copy; c: Palette; entry: HistoryEntry }) {
@@ -1223,6 +1423,14 @@ const styles = StyleSheet.create({
   group: { borderRadius: 22, overflow: 'hidden' },
   // Internet (iroh) sheet
   sheetIntro: { marginBottom: 12, lineHeight: 20 },
+  qrWrap: { alignItems: 'center', marginBottom: 12 },
+  filterRow: { gap: 8, paddingVertical: 4, paddingHorizontal: 2 },
+  filterChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18 },
+  filterText: { fontSize: 14 },
+  whatsNewRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 8 },
+  whatsNewText: { flex: 1, fontSize: 15, lineHeight: 21 },
+  segment: { flexDirection: 'row', alignSelf: 'flex-start', padding: 4, borderRadius: 22, marginBottom: 12 },
+  segmentItem: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18 },
   codeBox: { borderWidth: 1, borderRadius: 16, padding: 12, marginBottom: 12 },
   codeText: { fontSize: 12, lineHeight: 17 },
   codeInput: { fontSize: 13, minHeight: 96, textAlignVertical: 'top', marginBottom: 4 },

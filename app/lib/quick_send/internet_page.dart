@@ -10,6 +10,7 @@ import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/provider/selection/selected_sending_files_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
 import 'package:localsend_app/quick_send/internet_transfer.dart';
+import 'package:localsend_app/quick_send/qs_qr.dart';
 import 'package:localsend_app/quick_send/qs_style.dart';
 import 'package:localsend_app/util/native/directories.dart';
 import 'package:localsend_app/util/native/open_folder.dart';
@@ -17,7 +18,7 @@ import 'package:localsend_isolates/util/file_size_helper.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 import 'package:refena_flutter/refena_flutter.dart';
 
-enum _Step { menu, preparing, sharing, enter, receiving, received, error }
+enum _Step { menu, preparing, sharing, sent, enter, receiving, received, error }
 
 class QsInternetPage extends StatefulWidget {
   const QsInternetPage({super.key});
@@ -60,7 +61,10 @@ class _QsInternetPageState extends State<QsInternetPage> with Refena {
           case 'peerConnected':
             _peer = true;
           case 'sent':
+            // The other device has everything: stop sharing so the code stops working.
             _sent = (e.data['count'] as num?)?.toInt() ?? _sent + 1;
+            _step = _Step.sent;
+            unawaited(_transfer?.stop());
           case 'connecting':
             _step = _Step.receiving;
           case 'progress':
@@ -166,14 +170,14 @@ class _QsInternetPageState extends State<QsInternetPage> with Refena {
         note(s.shareCode),
         Center(
           child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+            // Large black-on-white code with a quiet zone, easy to scan with a phone camera.
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
             child: SizedBox(
-              width: 200,
-              height: 200,
-              child: PrettyQrView.data(
-                data: _code,
-                errorCorrectLevel: QrErrorCorrectLevel.L,
+              width: 260,
+              height: 260,
+              child: PrettyQrView(
+                qrImage: qsQrImage(_code),
                 decoration: const PrettyQrDecoration(shape: PrettyQrSmoothSymbol(roundFactor: 0, color: Colors.black)),
               ),
             ),
@@ -189,7 +193,7 @@ class _QsInternetPageState extends State<QsInternetPage> with Refena {
           ),
           child: SelectableText(_code, style: TextStyle(fontSize: 12, color: p.text, height: 1.4)),
         ),
-        note(_sent > 0 ? s.sent : (_peer ? s.peerConnected : s.waiting), color: _sent > 0 ? p.accent : null),
+        note(_peer ? s.peerConnected : s.waiting),
         buttons([
           OutlinedButton.icon(onPressed: _reset, icon: const Icon(Icons.stop), label: Text(s.stop)),
           FilledButton.icon(
@@ -201,6 +205,26 @@ class _QsInternetPageState extends State<QsInternetPage> with Refena {
             label: Text(t.general.copy),
           ),
         ]),
+      ],
+      _Step.sent => [
+        const SizedBox(height: 10),
+        Center(
+          child: Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(color: p.accent, shape: BoxShape.circle),
+            child: const Icon(Icons.check, color: Colors.white, size: 34),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Center(
+          child: Text(
+            t.shareHome.sent,
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: p.text),
+          ),
+        ),
+        note(s.sentStopped),
+        buttons([FilledButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.general.done))]),
       ],
       _Step.enter => [
         note(s.enterCode),

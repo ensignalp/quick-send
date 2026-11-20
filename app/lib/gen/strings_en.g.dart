@@ -76,6 +76,9 @@ class Translations with BaseTranslations<AppLocale, Translations> {
   late final Translations$shareHome$en shareHome = Translations$shareHome$en.internal(_root);
   late final Translations$qsSettings$en qsSettings = Translations$qsSettings$en.internal(_root);
   late final Translations$qsInternet$en qsInternet = Translations$qsInternet$en.internal(_root);
+  late final Translations$qsManual$en qsManual = Translations$qsManual$en.internal(_root);
+  late final Translations$qsHistory$en qsHistory = Translations$qsHistory$en.internal(_root);
+  late final Translations$qsWhatsNew$en qsWhatsNew = Translations$qsWhatsNew$en.internal(_root);
   late final Translations$qsTray$en qsTray = Translations$qsTray$en.internal(_root);
 }
 
@@ -603,7 +606,7 @@ class Translations$aboutPage$en {
   String get title => 'About Quick Send';
 
   List<String> get description => [
-    'Quick Send is a free, open-source app for securely sharing files and messages with nearby devices over your local network, without an internet connection.',
+    'Quick Send is a free, open-source app for securely sharing files and messages with nearby devices over your local network, without an internet connection, and with devices on other networks over the internet when you choose to.',
     'Quick Send is currently available on Android and Linux.',
   ];
 
@@ -1004,6 +1007,13 @@ class Translations$shareHome$en {
 
   // Translations
 
+  /// en: 'Trust and accept'
+  String get trustAndAccept => 'Trust and accept';
+
+  /// en: 'This is not the {name} you trust: its identity changed (for example, Quick Send was reinstalled on it). Trust it again if it is your device.'
+  String identityChanged({required Object name}) =>
+      'This is not the ${name} you trust: its identity changed (for example, Quick Send was reinstalled on it). Trust it again if it is your device.';
+
   /// en: 'Sent to {name}'
   String sentTo({required Object name}) => 'Sent to ${name}';
 
@@ -1207,6 +1217,18 @@ class Translations$qsSettings$en {
 
   // Translations
 
+  /// en: 'Profile photo'
+  String get profilePhoto => 'Profile photo';
+
+  /// en: 'Shown on this device only'
+  String get profilePhotoDesc => 'Shown on this device only';
+
+  /// en: 'Change photo'
+  String get profilePhotoChange => 'Change photo';
+
+  /// en: 'Remove photo'
+  String get profilePhotoRemove => 'Remove photo';
+
   /// en: 'Start Quick Send at login?'
   String get autostartOfferTitle => 'Start Quick Send at login?';
 
@@ -1355,6 +1377,9 @@ class Translations$qsSettings$en {
   /// en: 'Send with Quick Send'
   String get contextMenuLabel => 'Send with Quick Send';
 
+  /// en: 'Close Files once (or log out and in) so it picks up the new menu item.'
+  String get contextMenuRestartHint => 'Close Files once (or log out and in) so it picks up the new menu item.';
+
   /// en: 'Remove'
   String get remove => 'Remove';
 
@@ -1434,6 +1459,9 @@ class Translations$qsInternet$en {
 
   // Translations
 
+  /// en: 'The files were downloaded. Sharing stopped, the code no longer works.'
+  String get sentStopped => 'The files were downloaded. Sharing stopped, the code no longer works.';
+
   /// en: 'Over the internet'
   String get title => 'Over the internet';
 
@@ -1491,6 +1519,114 @@ class Translations$qsInternet$en {
 
   /// en: 'The transfer did not complete. Try again; it resumes where it stopped.'
   String get failed => 'The transfer did not complete. Try again; it resumes where it stopped.';
+}
+
+// Path: qsManual
+class Translations$qsManual$en {
+  Translations$qsManual$en.internal(this._root);
+
+  final Translations _root; // ignore: unused_field
+
+  // Translations
+
+  /// en: 'No local network address was found on this device; enter the full IP address instead.'
+  String get noNetwork => 'No local network address was found on this device; enter the full IP address instead.';
+
+  /// en: 'Enter the last number of the other device's address (shown in its Quick Send or LocalSend info).'
+  String get hashtagHint => 'Enter the last number of the other device\'s address (shown in its Quick Send or LocalSend info).';
+
+  /// en: 'Looking for the device…'
+  String get searching => 'Looking for the device…';
+
+  /// en: 'No Quick Send or LocalSend device answered at this address. Tap for details.'
+  String get notFound => 'No Quick Send or LocalSend device answered at this address. Tap for details.';
+}
+
+// Path: qsHistory
+class Translations$qsHistory$en {
+  Translations$qsHistory$en.internal(this._root);
+
+  final Translations _root; // ignore: unused_field
+
+  // Translations
+
+  /// en: 'All'
+  String get all => 'All';
+
+  /// en: 'Images'
+  String get images => 'Images';
+
+  /// en: 'Videos'
+  String get videos => 'Videos';
+
+  /// en: 'Documents'
+  String get documents => 'Documents';
+
+  /// en: 'Messages'
+  String get messages => 'Messages';
+
+  /// en: 'Other'
+  String get other => 'Other';
+
+  /// en: 'Any time'
+  String get anyTime => 'Any time';
+
+  /// en: 'Today'
+  String get today => 'Today';
+
+  /// en: 'Yesterday'
+  String get yesterday => 'Yesterday';
+
+  /// en: 'Last 7 days'
+  String get last7 => 'Last 7 days';
+
+  /// en: 'Last 30 days'
+  String get last30 => 'Last 30 days';
+
+  /// en: 'Pick dates…'
+  String get pickRange => 'Pick dates…';
+
+  /// en: 'Nothing matches these filters.'
+  String get noMatch => 'Nothing matches these filters.';
+}
+
+// Path: qsWhatsNew
+class Translations$qsWhatsNew$en {
+  Translations$qsWhatsNew$en.internal(this._root);
+
+  final Translations _root; // ignore: unused_field
+
+  // Translations
+
+  /// en: 'What's new in Quick Send {version}'
+  String title({required Object version}) => 'What\'s new in Quick Send ${version}';
+
+  /// en: 'Over the internet: a larger QR code that phones read easily, and sharing stops by itself once the files arrive.'
+  String get internet => 'Over the internet: a larger QR code that phones read easily, and sharing stops by itself once the files arrive.';
+
+  /// en: 'The QR code and link page has the Quick Send design, with the QR code right on the page.'
+  String get qrPage => 'The QR code and link page has the Quick Send design, with the QR code right on the page.';
+
+  /// en: 'Send to an address: the dots of an IP address appear as you type, and # with the last number of the address works again.'
+  String get manual => 'Send to an address: the dots of an IP address appear as you type, and # with the last number of the address works again.';
+
+  /// en: 'If a trusted device's identity changed (for example after reinstalling Quick Send), you can trust it again with one tap.'
+  String get trusted => 'If a trusted device\'s identity changed (for example after reinstalling Quick Send), you can trust it again with one tap.';
+
+  /// en: 'Recent activity has filters for images, videos, documents, messages and dates.'
+  String get history => 'Recent activity has filters for images, videos, documents, messages and dates.';
+
+  /// en: 'Set a profile photo in Settings (shown on this device only).'
+  String get avatar => 'Set a profile photo in Settings (shown on this device only).';
+
+  /// en: 'Files and folders are picked with your desktop's own file chooser (GNOME, KDE), which remembers the last folder.'
+  String get chooser => 'Files and folders are picked with your desktop\'s own file chooser (GNOME, KDE), which remembers the last folder.';
+
+  /// en: '"Send with Quick Send" in Files now appears and disappears right when you change the setting.'
+  String get contextMenu => '"Send with Quick Send" in Files now appears and disappears right when you change the setting.';
+
+  /// en: 'The window opens at 575 × 770 and its title bar follows your system theme and icons.'
+  String get window => 'The window opens at 575 × 770 and its title bar follows your system theme and icons.';
 }
 
 // Path: qsTray

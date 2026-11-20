@@ -3,6 +3,7 @@
 
 import { NativeEventEmitter, NativeModules } from 'react-native';
 import { previewBridge, previewEvents } from './previewBridge';
+import type { FileKind } from './transfers';
 import type { Language } from './strings';
 
 export type Device = {
@@ -35,7 +36,10 @@ export type Outgoing = {
   progress: number;
   status: 'waiting' | 'sending' | 'sent' | 'failed';
 };
-export type HistoryEntry = { id: string; direction: 'sent' | 'received'; peer: string; count: number; size: number; ok: boolean; at: number };
+export type HistoryEntry = {
+  id: string; direction: 'sent' | 'received'; peer: string; count: number; size: number; ok: boolean; at: number;
+  kinds?: FileKind[]; // file kinds (recent activity filters); missing in entries from before 1.1.0
+};
 export type TrustedDevice = { fingerprint: string; alias: string };
 export type NetworkInfo = { addresses: string[]; port: number };
 export type MediaKind = 'images' | 'videos' | 'documents';
@@ -55,6 +59,7 @@ export type Settings = {
   autoFinish: boolean;
   saveHistory: boolean;
   autoUpdate: boolean; // download, verify and offer signed updates in the background
+  lastVersion: string | null; // app version of the last start ("What's new" after an update)
   trusted: TrustedDevice[];
   history: HistoryEntry[];
 };
@@ -70,6 +75,7 @@ export const defaultSettings: Settings = {
   autoFinish: false,
   saveHistory: true,
   autoUpdate: true,
+  lastVersion: null,
   trusted: [],
   history: [],
 };
@@ -84,9 +90,11 @@ export type QuickSendBridge = {
   cancel: (sessionId: string) => Promise<void>;
   setVisibility: (visibility: 'everyone' | 'off') => Promise<void>;
   getInitialSharedFiles: () => Promise<SharedFile[]>;
+  /** Device picked in the share sheet for the share that started the app (Direct Share), as JSON. */
+  getInitialShareTarget?: () => Promise<string | null>;
   getVisibility: () => Promise<'everyone' | 'off'>;
   isReceiverEnabled: () => Promise<boolean>;
-  getAppInfo: () => Promise<{ version: string; releasesRepo: string; alias?: string }>;
+  getAppInfo: () => Promise<{ version: string; releasesRepo: string; alias?: string; updated?: boolean }>;
   getNetworkInfo?: () => Promise<NetworkInfo>;
   openDownloads?: () => Promise<boolean>;
   getSettings?: () => Promise<string | null>;
@@ -114,6 +122,8 @@ export type QuickSendBridge = {
   internetSend?: (files: SharedFile[]) => Promise<string>;
   internetReceive?: (code: string) => Promise<string>;
   internetCancel?: (id: string) => Promise<boolean>;
+  /** Manual sending: asks host:port who it is; the answer is a { type: 'probeResult', requestId, device | error } event. */
+  probe?: (host: string, port: number) => Promise<string>;
   addListener: (eventName: string) => void;
   removeListeners: (count: number) => void;
 };
@@ -148,6 +158,7 @@ export function parseSettings(json: string | null | undefined): Settings {
       autoFinish: pick('autoFinish', bool),
       saveHistory: pick('saveHistory', bool),
       autoUpdate: pick('autoUpdate', bool),
+      lastVersion: pick('lastVersion', v => v === null || typeof v === 'string'),
       trusted: pick('trusted', v => Array.isArray(v) && v.every(d => d && typeof d.fingerprint === 'string' && typeof d.alias === 'string')),
       history: pick('history', v => Array.isArray(v)),
     };
@@ -157,7 +168,13 @@ export function parseSettings(json: string | null | undefined): Settings {
 }
 
 export async function loadSettings(): Promise<Settings> {
-  return parseSettings(await bridge?.getSettings?.().catch(() => null));
+  return (await loadSettingsWithOrigin()).settings;
+}
+
+/** Settings plus whether any were stored before (false on a fresh install). */
+export async function loadSettingsWithOrigin(): Promise<{ settings: Settings; stored: boolean }> {
+  const json = await bridge?.getSettings?.().catch(() => null);
+  return { settings: parseSettings(json), stored: !!json };
 }
 
 export function saveSettings(settings: Settings) {

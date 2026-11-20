@@ -78,12 +78,17 @@ object QuickSendFiles {
 
 object QuickSendShare {
   @Volatile private var pendingIntent: Intent? = null
+  /** Device picked in the share sheet (Direct Share) for the pending share, as JSON. */
+  @Volatile private var pendingTarget: String? = null
 
-  fun capture(intent: Intent?) {
+  fun capture(intent: Intent?, context: Context? = null) {
     if (intent?.action == Intent.ACTION_SEND || intent?.action == Intent.ACTION_SEND_MULTIPLE) {
       pendingIntent = intent
+      pendingTarget = context?.let { QuickSendDirectShare.targetFor(it, intent)?.toString() }
     }
   }
+
+  @Synchronized fun consumeTarget(): String? = pendingTarget.also { pendingTarget = null }
 
   @Synchronized fun consume(context: Context): List<SharedFileData> {
     val value = pendingIntent ?: return emptyList()
